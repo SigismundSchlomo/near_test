@@ -30,7 +30,9 @@ pub const REF_EXCHANGE_ADDRESS: AccountId = "exchange.ref-dev.testnet".to_string
 
 #[near_bindgen()]
 #[derive(Default, BorshSerialize, BorshDeserialize)]
-pub struct Contract;
+pub struct Contract {
+    message: String,
+}
 
 #[ext_contract(ext_ref_finance)]
 pub trait RefFinance {
@@ -45,6 +47,15 @@ pub trait ExtSelf {
 
 #[near_bindgen()]
 impl Contract {
+
+    pub fn set_message(&mut self, message: String) {
+        self.message = message;
+    }
+
+    pub fn get_message(&self) -> String {
+        self.message.clone()
+    }
+
     pub fn get_whitelisted_tokens(&self) -> Promise {
         ext_ref_finance::get_whitelisted_tokens(&REF_EXCHANGE_ADDRESS, 0, GAS).then(
             ext_self::handle_get_whitelisted_tokens_result(
@@ -56,7 +67,7 @@ impl Contract {
     }
 
     #[private]
-    pub fn callback_promise_result(&mut self) -> Vec<AccountId> {
+    pub fn handle_get_whitelisted_tokens_result(&mut self) -> Vec<AccountId> {
         assert_eq!(env::promise_results_count(), 1, "ERR_TOO_MANY_RESULTS");
         match env::promise_result(0) {
             PromiseResult::NotReady => unreachable!(),
@@ -71,6 +82,4 @@ impl Contract {
         }
     }
 }
-
-
 
