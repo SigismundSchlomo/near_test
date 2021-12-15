@@ -55,7 +55,7 @@ impl Contract {
     }
 
     pub fn get_whitelisted_tokens(&self) -> Promise {
-        ext_ref_finance::get_whitelisted_tokens(REF_EXCHANGE_ADDRESS.to_string(), 0, GAS).then(
+        ext_ref_finance::get_whitelisted_tokens(&REF_EXCHANGE_ADDRESS.to_string(), 0, GAS).then(
             ext_self::handle_get_whitelisted_tokens_result(
                 &env::current_account_id(),
                 0,
