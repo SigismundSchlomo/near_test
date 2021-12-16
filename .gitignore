@@ -1,3 +1,5 @@
 /target
 near-test/Cargo.lock
 .idea/
+/Cargo.lock
+/neardev/
