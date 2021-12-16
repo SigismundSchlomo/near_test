@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    "./near-test"
+    "./near-test",
+    "./fun-token"
 ]
 
 # This configuration is needed to reduce size of the compiled wasm file
