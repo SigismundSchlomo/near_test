@@ -1,6 +1,7 @@
 //! This is a smart contract just to try some features of near_sdk
 
 
+use near_contract_standards::storage_management::StorageBalance;
 use near_sdk::borsh::{self, BorshSerialize, BorshDeserialize};
 use near_sdk::{
     AccountId,
@@ -37,11 +38,13 @@ pub struct Contract {
 pub trait RefFinance {
     fn storage_deposit(&mut self, account_id: Option<ValidAccountId>, registration_only: Option<bool>) -> StorageBalance;
     fn get_whitelisted_tokens(&self) -> Vec<AccountId>;
+    fn get_number_of_pools(&self) -> u64;
 }
 
 #[ext_contract(ext_self)]
 pub trait ExtSelf {
     fn handle_get_whitelisted_tokens_result() -> Vec<AccountId>;
+    fn handle_number_of_pools() -> u64;
 }
 
 #[near_bindgen()]
@@ -55,13 +58,30 @@ impl Contract {
     }
 
     pub fn get_whitelisted_tokens(&self) -> Promise {
-        ext_ref_finance::get_whitelisted_tokens(&REF_EXCHANGE_ADDRESS.to_string(), 0, GAS).then(
+        let prepaid_gas = env::prepaid_gas();
+        ext_ref_finance::get_whitelisted_tokens(&REF_EXCHANGE_ADDRESS.to_string(), 0, prepaid_gas).then(
             ext_self::handle_get_whitelisted_tokens_result(
                 &env::current_account_id(),
                 0,
-                GAS,
+                prepaid_gas
             ),
         )
+    }
+
+    pub fn get_number_of_pools(&self) -> Promise {
+        let prepaid_gas = env::prepaid_gas();
+        ext_ref_finance::get_number_of_pools(&REF_EXCHANGE_ADDRESS.to_string(), 0, prepaid_gas).then(
+            ext_self::handle_number_of_pools(
+                &env::current_account_id(),
+                0,
+                prepaid_gas
+            ),
+        )
+    }
+
+    pub fn get_simple(&self) -> Promise {
+        let prepaid_gas = env::prepaid_gas();
+        ext_ref_finance::get_whitelisted_tokens(&REF_EXCHANGE_ADDRESS.to_string(), 0, prepaid_gas)
     }
 
     #[private]
@@ -76,6 +96,20 @@ impl Contract {
                     env::panic(b"ERR_WRONG_VAL_RECEIVED")
                 }
             }
+            PromiseResult::Failed => env::panic(b"ERR_CALL_FAILED"),
+        }
+    }
+
+    pub fn handle_number_of_pools(&mut self) -> u64 {
+        match env::promise_result(0) {
+            PromiseResult::NotReady => unreachable!(),
+            PromiseResult::Successful(val) => {
+                if let Ok(number) = near_sdk::serde_json::from_slice::<u64>(&val) {
+                    number
+                } else {
+                    env::panic(b"ERR_WRONG_VAL_RECEIVED")
+                }
+            },
             PromiseResult::Failed => env::panic(b"ERR_CALL_FAILED"),
         }
     }
