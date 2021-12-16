@@ -62,9 +62,15 @@ impl Contract {
         this
     }
 
+    pub fn get_ft_total_supply_with_caller_id(&self, caller_id: AccountId) -> (AccountId, U128) {
+        (caller_id, self.token.ft_total_supply())
+    }
+
+    pub fn get_ft_balance_of_with_caller_id(&self, caller_id: AccountId) -> (AccountId, U128) {
+        (caller_id, self.token.ft_balance_of(caller_id.into()))
+    }
 }
 
-//TODO: Check that this macros does
 near_contract_standards::impl_fungible_token_core!(Contract, token);
 near_contract_standards::impl_fungible_token_storage!(Contract, token);
 
