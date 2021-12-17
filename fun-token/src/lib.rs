@@ -62,10 +62,14 @@ impl Contract {
         this
     }
 
+    /// Idea: move token price calculation logic to token smart contract.
+
+    //TODO: Change name
     pub fn get_ft_total_supply_with_caller_id(&self, caller_id: AccountId) -> (AccountId, U128) {
         (caller_id, self.token.ft_total_supply())
     }
 
+    //TODO: Change name
     pub fn get_ft_balance_of_with_caller_id(&self, caller_id: AccountId) -> (AccountId, U128) {
         (caller_id, self.token.ft_balance_of(caller_id.into()))
     }
