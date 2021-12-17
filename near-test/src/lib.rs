@@ -39,7 +39,7 @@ trait ExtSelf {
 }
 
 #[derive(BorshSerialize, BorshDeserialize)]
-struct UsersMeta {
+pub struct UsersMeta {
     /// token on the moment of user's request
     token_price: u128,
     /// token amount in user's request
@@ -66,7 +66,7 @@ impl Contract {
             //possibly non persistent
             total_deposit: 0,
             token_account_id: TOKEN_ADDRESS.to_string(),
-            users_metas: LookupMap::new("UsersMetaHashTable"),
+            users_metas: LookupMap::new("UsersMetaHashTable".as_bytes()),
         }
     }
 
@@ -98,7 +98,7 @@ impl Contract {
             calculate_tokens_amount(
                 // Is env::predecessor_account_id returns expected value? Could return env::current_account_id because this is a callback...
                 self.get_cached_token_amount(env::predecessor_account_id()),
-                self.get_cached_token_price_of(env::predecessor_account_id()),
+                self.get_cached_token_price_of(&env::predecessor_account_id()),
             ),
             &self.token_account_id,
             0,
@@ -108,7 +108,7 @@ impl Contract {
         .then(ext_self::add_to_total_deposit(
             calculate_tokens_amount(
                 self.get_cached_token_amount(env::predecessor_account_id()),
-                self.get_cached_token_price_of(env::predecessor_account_id()),
+                self.get_cached_token_price_of(&env::predecessor_account_id()),
             ),
             &self.token_account_id,
             0,
@@ -159,25 +159,25 @@ impl Contract {
         }
     }
 
-    fn cache_token_amount(&mut self, account_id: &AccountId, amount: Balance) {
-        if let Some(mut meta) = self.users_metas.get(account_id) {
+    fn cache_token_amount(&mut self, account_id: String, amount: Balance) {
+        if let Some(mut meta) = self.users_metas.get(&account_id) {
             meta.token_amount = amount
         } else {
             env::panic(b"ERR_AMOUNT_OWERFLOW")
         }
     }
 
-    fn get_cached_token_amount(&self, account_id: &AccountId) -> Balance {
-        if let Some(meta) = self.users_metas.get(account_id) {
+    fn get_cached_token_amount(&self, account_id: String) -> Balance {
+        if let Some(meta) = self.users_metas.get(&account_id) {
             meta.token_amount
         } else {
             env::panic(b"ERR_RETRIVING_TOKEN_AMOUNT")
         }
     }
 
-    fn get_cached_token_price_of(&self, account_id: &AccountId) -> u128 {
-        if let Some(UsersMeta) = self.users_metas.get(&account_id) {
-            return UsersMeta.token_price;
+    fn get_cached_token_price_of(&self, account_id: &String) -> u128 {
+        if let Some(meta) = self.users_metas.get(account_id) {
+            return meta.token_price;
         } else {
             1
         }
