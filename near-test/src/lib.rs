@@ -1,22 +1,21 @@
 //! This is a smart contract just to try some features of near_sdk
 //! There are some terrible decisions are made
+//!
+//! TODO: Check if used account_id is always valid
 
-use near_contract_standards::storage_management::StorageBalance;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::{LookupMap, Vector};
-use near_sdk::json_types::{ValidAccountId, U128};
+use near_sdk::collections::LookupMap;
+use near_sdk::json_types::U128;
 use near_sdk::{
-    env, ext_contract, near_bindgen, AccountId, Balance, Gas, Promise, PromiseOrValue,
+    env, ext_contract, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, Promise,
     PromiseResult,
 };
-use near_sdk_sim::config::ActionCosts::deploy_contract;
-use std::arch::x86_64::_xabort_code;
 
 near_sdk::setup_alloc!();
 
 //Do we need to register an account?
 
-const CODE: &[u8] = include_bytes!("../res/fun_token.wasm");
+const CODE: &[u8] = include_bytes!("../../res/fun_token.wasm");
 const TOKEN_ADDRESS: &str = env!("TOKEN_ADDRESS");
 pub const XCC_GAS: Gas = 20000000000000;
 
@@ -46,8 +45,8 @@ struct UsersMeta {
     token_amount: Balance,
 }
 
-#[near_bindgen()]
-#[derive(Default, BorshSerialize, BorshDeserialize)]
+#[near_bindgen]
+#[derive(PanicOnDefault, BorshSerialize, BorshDeserialize)]
 pub struct Contract {
     pub total_deposit: Balance,
     pub token_account_id: AccountId,
@@ -58,11 +57,10 @@ fn calculate_tokens_amount(value: Balance, token_price: u128) -> u128 {
     value.checked_div(token_price).unwrap_or(0)
 }
 
-#[near_bindgen()]
+#[near_bindgen]
 impl Contract {
     #[init]
     pub fn new() -> Self {
-        deploy_token();
         Self {
             //possibly non persistent
             total_deposit: 0,
@@ -72,7 +70,8 @@ impl Contract {
     }
 
     // TODO: fix
-    fn deploy_token(&self) -> Promise {
+    #[private]
+    pub fn deploy_token(&self) -> Promise {
         Promise::new(self.token_account_id.clone())
             .create_account()
             .add_full_access_key(env::signer_account_pk())
@@ -81,7 +80,7 @@ impl Contract {
     }
 
     #[payable]
-    pub fn stake(&mut self, amount: Balance) {
+    pub fn stake(&mut self, amount: Balance) -> Promise {
         self.cache_token_amount(env::predecessor_account_id(), amount);
         // getTokenPrice
         ext_fungible_token::get_ft_total_supply_with_caller_id(
@@ -128,6 +127,9 @@ impl Contract {
         //     XCC_GAS
         // ));
     }
+
+    // #[payable]
+    // pub fn unstake(&self)
 
     fn cache_token_amount(&mut self, &account_id: AccountId, amount: Balance) {
         if let Some(mut meta) = self.users_metas.get(account_id) {
