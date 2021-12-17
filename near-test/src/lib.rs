@@ -38,6 +38,7 @@ trait ExtSelf {
     fn add_to_total_deposit(&mut self, amount: Balance);
 }
 
+#[derive(BorshSerialize, BorshDeserialize)]
 struct UsersMeta {
     /// token on the moment of user's request
     token_price: u128,
@@ -69,13 +70,10 @@ impl Contract {
         }
     }
 
-    // TODO: fix
     #[private]
     pub fn deploy_token(&self) -> Promise {
         Promise::new(self.token_account_id.clone())
-            .create_account()
             .add_full_access_key(env::signer_account_pk())
-            .transfer(3_000_000_000_000_000_000_000_000)
             .deploy_contract(CODE.to_vec())
     }
 
@@ -116,43 +114,6 @@ impl Contract {
             0,
             XCC_GAS,
         ))
-        // .then(ext_fungible_token::internal_withdraw(
-        //     env::predecessor_account_id(),
-        //     calculate_tokens_amount(
-        //         amount,
-        //         self.get_cached_token_price_of(env::predecessor_account_id()),
-        //     ),
-        //     &self.token_account_id,
-        //     0,
-        //     XCC_GAS
-        // ));
-    }
-
-    // #[payable]
-    // pub fn unstake(&self)
-
-    fn cache_token_amount(&mut self, &account_id: AccountId, amount: Balance) {
-        if let Some(mut meta) = self.users_metas.get(account_id) {
-            meta.token_amount = amount
-        } else {
-            env::panic(b"ERR_AMOUNT_OWERFLOW")
-        }
-    }
-
-    fn get_cached_token_amount(&self, &account_id: AccountId) -> Balance {
-        if let Some(meta) = self.users_metas.get(account_id) {
-            meta.token_amount
-        } else {
-            env::panic(b"ERR_RETRIVING_TOKEN_AMOUNT")
-        }
-    }
-
-    fn get_cached_token_price_of(&self, &account_id: AccountId) -> u128 {
-        if let Some(UsersMeta) = self.users_metas.get(&account_id) {
-            return UsersMeta.token_price;
-        } else {
-            1
-        }
     }
 
     #[private]
@@ -185,11 +146,38 @@ impl Contract {
             PromiseResult::Failed => env::panic(b"ERR_TOKEN_PRICE_CALL_FAILED"),
         }
     }
+}
+
+impl Contract {
 
     fn get_token_price(&self, val: U128) -> u128 {
         let total_supply: Balance = val.into();
         if total_supply > 0 {
             self.total_deposit.checked_div(total_supply).unwrap_or(1)
+        } else {
+            1
+        }
+    }
+
+    fn cache_token_amount(&mut self, account_id: &AccountId, amount: Balance) {
+        if let Some(mut meta) = self.users_metas.get(account_id) {
+            meta.token_amount = amount
+        } else {
+            env::panic(b"ERR_AMOUNT_OWERFLOW")
+        }
+    }
+
+    fn get_cached_token_amount(&self, account_id: &AccountId) -> Balance {
+        if let Some(meta) = self.users_metas.get(account_id) {
+            meta.token_amount
+        } else {
+            env::panic(b"ERR_RETRIVING_TOKEN_AMOUNT")
+        }
+    }
+
+    fn get_cached_token_price_of(&self, account_id: &AccountId) -> u128 {
+        if let Some(UsersMeta) = self.users_metas.get(&account_id) {
+            return UsersMeta.token_price;
         } else {
             1
         }
