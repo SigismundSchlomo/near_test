@@ -2,6 +2,7 @@
 //! There are some terrible decisions are made
 //!
 //! TODO: Check if used account_id is always valid
+//! TODO: Write some unit tests
 
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LookupMap;
@@ -60,14 +61,41 @@ fn calculate_tokens_amount(value: Balance, token_price: u128) -> u128 {
 
 #[near_bindgen]
 impl Contract {
-    #[init]
-    pub fn new() -> Self {
-        Self {
+
+    #[init(ignore_state)]
+    pub fn reinit() -> Self {
+        let mut instance = Self {
             //possibly non persistent
             total_deposit: 0,
             token_account_id: TOKEN_ADDRESS.to_string(),
+            // TODO: Use Storage keys enum pattern
             users_metas: LookupMap::new("UsersMetaHashTable".as_bytes()),
-        }
+        };
+
+        instance.register_account(&env::current_account_id());
+        // add some initial stake?
+
+        return instance;
+    }
+
+    #[init]
+    pub fn init() -> Self {
+        let mut instance = Self {
+            //possibly non persistent
+            total_deposit: 0,
+            token_account_id: TOKEN_ADDRESS.to_string(),
+            // TODO: Use Storage keys enum pattern
+            users_metas: LookupMap::new("UsersMetaHashTable".as_bytes()),
+        };
+
+        instance.register_account(&env::current_account_id());
+        // add some initial stake?
+
+        return instance;
+    }
+
+    pub fn register_user(&mut self) {
+        self.register_account(&env::predecessor_account_id());
     }
 
     #[private]
@@ -79,7 +107,7 @@ impl Contract {
 
     #[payable]
     pub fn stake(&mut self, amount: Balance) -> Promise {
-        self.cache_token_amount(env::predecessor_account_id(), amount);
+        self.cache_token_amount(&env::predecessor_account_id(), amount);
         // getTokenPrice
         ext_fungible_token::get_ft_total_supply_with_caller_id(
             env::predecessor_account_id(),
@@ -97,7 +125,7 @@ impl Contract {
             env::predecessor_account_id(),
             calculate_tokens_amount(
                 // Is env::predecessor_account_id returns expected value? Could return env::current_account_id because this is a callback...
-                self.get_cached_token_amount(env::predecessor_account_id()),
+                self.get_cached_token_amount(&env::predecessor_account_id()),
                 self.get_cached_token_price_of(&env::predecessor_account_id()),
             ),
             &self.token_account_id,
@@ -107,7 +135,7 @@ impl Contract {
         // add to total stake
         .then(ext_self::add_to_total_deposit(
             calculate_tokens_amount(
-                self.get_cached_token_amount(env::predecessor_account_id()),
+                self.get_cached_token_amount(&env::predecessor_account_id()),
                 self.get_cached_token_price_of(&env::predecessor_account_id()),
             ),
             &self.token_account_id,
@@ -159,16 +187,16 @@ impl Contract {
         }
     }
 
-    fn cache_token_amount(&mut self, account_id: String, amount: Balance) {
-        if let Some(mut meta) = self.users_metas.get(&account_id) {
+    fn cache_token_amount(&mut self, account_id: &String, amount: Balance) {
+        if let Some(mut meta) = self.users_metas.get(account_id) {
             meta.token_amount = amount
         } else {
-            env::panic(b"ERR_AMOUNT_OWERFLOW")
+            env::panic(b"ERR_AMOUNT_CACHING")
         }
     }
 
-    fn get_cached_token_amount(&self, account_id: String) -> Balance {
-        if let Some(meta) = self.users_metas.get(&account_id) {
+    fn get_cached_token_amount(&self, account_id: &String) -> Balance {
+        if let Some(meta) = self.users_metas.get(account_id) {
             meta.token_amount
         } else {
             env::panic(b"ERR_RETRIVING_TOKEN_AMOUNT")
@@ -181,5 +209,16 @@ impl Contract {
         } else {
             1
         }
+    }
+
+    fn register_account(&mut self, account_id: &String) {
+        if let Some(_) = self.users_metas.get(account_id) {
+            env::panic(b"ACCOUNT_ALLREADY_REGISTERED");
+        }
+        let user_meta = UsersMeta {
+            token_price: 1,
+            token_amount: 0
+        };
+        self.users_metas.insert(&account_id, &user_meta );
     }
 }
