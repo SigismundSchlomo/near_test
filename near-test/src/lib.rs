@@ -18,7 +18,7 @@ near_sdk::setup_alloc!();
 
 const CODE: &[u8] = include_bytes!("../../res/fun_token.wasm");
 const TOKEN_ADDRESS: &str = env!("TOKEN_ADDRESS");
-pub const XCC_GAS: Gas = 20000000000000;
+pub const XCC_GAS: Gas = 300_000_000_000_000;
 
 #[ext_contract(ext_fungible_token)]
 pub trait FungibleToken {
@@ -101,7 +101,9 @@ impl Contract {
     #[private]
     pub fn deploy_token(&self) -> Promise {
         Promise::new(self.token_account_id.clone())
+            .create_account()
             .add_full_access_key(env::signer_account_pk())
+            .transfer(3_000_000_000_000_000_000_000_000) // 3e24yN, 3N
             .deploy_contract(CODE.to_vec())
     }
 
@@ -112,36 +114,36 @@ impl Contract {
         ext_fungible_token::get_ft_total_supply_with_caller_id(
             env::predecessor_account_id(),
             &self.token_account_id,
-            1,
+            0,
             XCC_GAS,
         )
         .then(ext_self::get_token_price_callback(
             &env::current_account_id(),
-            1,
+            0,
             XCC_GAS,
         ))
         // mint tokens
-        .then(ext_fungible_token::internal_deposit(
-            env::predecessor_account_id(),
-            calculate_tokens_amount(
-                // Is env::predecessor_account_id returns expected value? Could return env::current_account_id because this is a callback...
-                self.get_cached_token_amount(&env::predecessor_account_id()),
-                self.get_cached_token_price_of(&env::predecessor_account_id()),
-            ),
-            &self.token_account_id,
-            1,
-            XCC_GAS,
-        ))
-        // add to total stake
-        .then(ext_self::add_to_total_deposit(
-            calculate_tokens_amount(
-                self.get_cached_token_amount(&env::predecessor_account_id()),
-                self.get_cached_token_price_of(&env::predecessor_account_id()),
-            ),
-            &self.token_account_id,
-            1,
-            XCC_GAS,
-        ))
+    //     .then(ext_fungible_token::internal_deposit(
+    //         env::predecessor_account_id(),
+    //         calculate_tokens_amount(
+    //             // Is env::predecessor_account_id returns expected value? Could return env::current_account_id because this is a callback...
+    //             self.get_cached_token_amount(&env::predecessor_account_id()),
+    //             self.get_cached_token_price_of(&env::predecessor_account_id()),
+    //         ),
+    //         &self.token_account_id,
+    //         0,
+    //         XCC_GAS,
+    //     ))
+    //     // add to total stake
+    //     .then(ext_self::add_to_total_deposit(
+    //         calculate_tokens_amount(
+    //             self.get_cached_token_amount(&env::predecessor_account_id()),
+    //             self.get_cached_token_price_of(&env::predecessor_account_id()),
+    //         ),
+    //         &self.token_account_id,
+    //         0,
+    //         XCC_GAS,
+    //     ))
     }
 
     #[private]
@@ -153,7 +155,6 @@ impl Contract {
         }
     }
 
-    //TODO: move boilerplate
     #[private]
     pub fn get_token_price_callback(&mut self) {
         match env::promise_result(0) {
