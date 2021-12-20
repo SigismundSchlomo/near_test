@@ -1,12 +1,9 @@
 //! This is a smart contract just to try some features of near_sdk
 
-use std::intrinsics::unreachable;
-use near_contract_standards::storage_management::StorageBalance;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::{LookupMap, Vector};
 use near_sdk::json_types::ValidAccountId;
 use near_sdk::{
-    env, ext_contract, near_bindgen, AccountId, Gas, Promise, PromiseOrValue, PromiseResult,
+    env, ext_contract, near_bindgen, AccountId, Gas, Promise, PromiseResult,
 };
 use crate::ref_utils::PoolInfo;
 
