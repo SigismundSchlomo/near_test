@@ -112,12 +112,12 @@ impl Contract {
         ext_fungible_token::get_ft_total_supply_with_caller_id(
             env::predecessor_account_id(),
             &self.token_account_id,
-            0,
+            1,
             XCC_GAS,
         )
         .then(ext_self::get_token_price_callback(
             &env::current_account_id(),
-            0,
+            1,
             XCC_GAS,
         ))
         // mint tokens
@@ -129,7 +129,7 @@ impl Contract {
                 self.get_cached_token_price_of(&env::predecessor_account_id()),
             ),
             &self.token_account_id,
-            0,
+            1,
             XCC_GAS,
         ))
         // add to total stake
@@ -139,7 +139,7 @@ impl Contract {
                 self.get_cached_token_price_of(&env::predecessor_account_id()),
             ),
             &self.token_account_id,
-            0,
+            1,
             XCC_GAS,
         ))
     }
