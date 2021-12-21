@@ -14,31 +14,22 @@ near_sdk::setup_alloc!();
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
+    //FT has 24 decimals
     token: FungibleToken,
-    metadata: LazyOption<FungibleTokenMetadata>,
+    total_stake: u128
 }
 
 #[near_bindgen]
 impl Contract {
 
     #[init]
-    pub fn init(owner_id: ValidAccountId, total_supply: U128) -> Self {
-        let metadata = FungibleTokenMetadata {
-            spec: FT_METADATA_SPEC.to_string(),
-            name: "Fungible token".to_string(),
-            symbol: "FG".to_string(),
-            icon: None,
-            reference: None,
-            reference_hash: None,
-            decimals: 24,
-        };
-        metadata.assert_valid();
+    pub fn init(owner_id: ValidAccountId, token_total_supply: U128, total_stake: U128) -> Self {
         let mut this = Self {
             token: FungibleToken::new(b"t".to_vec()),
-            metadata: LazyOption::new(b"m".to_vec(), Some(&metadata))
+            total_stake: total_stake.into()
         };
         this.token.internal_register_account(owner_id.as_ref());
-        this.token.internal_deposit(owner_id.as_ref(), total_supply.into());
+        this.token.internal_deposit(owner_id.as_ref(), token_total_supply.into());
         this
     }
 
@@ -65,7 +56,7 @@ near_contract_standards::impl_fungible_token_storage!(Contract, token, on_accoun
 #[near_bindgen]
 impl FungibleTokenMetadataProvider for Contract {
     fn ft_metadata(&self) -> FungibleTokenMetadata {
-        self.metadata.get().unwrap()
+        self.token_metadata.get().unwrap()
     }
 }
 
