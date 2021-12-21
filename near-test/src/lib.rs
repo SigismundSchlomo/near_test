@@ -1,166 +1,147 @@
-//! This is a smart contract just to try some features of near_sdk
-
-
-use near_contract_standards::storage_management::StorageBalance;
-use near_sdk::borsh::{self, BorshSerialize, BorshDeserialize};
-use near_sdk::{
-    AccountId,
-    env,
-    ext_contract,
-    Gas,
-    near_bindgen,
-    Promise,
-    PromiseOrValue,
-    PromiseResult,
+use near_contract_standards::fungible_token::metadata::{
+    FungibleTokenMetadata, FungibleTokenMetadataProvider, FT_METADATA_SPEC,
 };
-use near_sdk::collections::{LookupMap, Vector};
-use near_sdk::json_types::ValidAccountId;
+use near_contract_standards::fungible_token::FungibleToken;
+use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::collections::LazyOption;
+use near_sdk::json_types::{ValidAccountId, U128};
+use near_sdk::{env, log, near_bindgen, AccountId, Balance, PanicOnDefault, PromiseOrValue};
 
 near_sdk::setup_alloc!();
 
-pub const GAS: Gas = 50_000_000_000_000;
-
-// pub const REF_EXCHANGE_ADDRESS: &str = if cfg!(feature = "main_net") {
-//     "v2.ref-finance.near".to_string()
-// } else {
-//     "ref-finance.testnet".to_string()
-// };
-
-pub const REF_EXCHANGE_ADDRESS: &str = "exchange.ref-dev.testnet";
-
-#[near_bindgen()]
-#[derive(Default, BorshSerialize, BorshDeserialize)]
+#[near_bindgen]
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
-    message: String,
+    token: FungibleToken,
+    metadata: LazyOption<FungibleTokenMetadata>,
 }
 
-#[ext_contract(ext_ref_finance)]
-pub trait RefFinance {
-    fn storage_deposit(&mut self, account_id: Option<ValidAccountId>, registration_only: Option<bool>) -> StorageBalance;
-    fn get_whitelisted_tokens(&self) -> Vec<AccountId>;
-    fn get_number_of_pools(&self) -> u64;
-}
+const DATA_IMAGE_SVG_NEAR_ICON: &str = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 288 288'%3E%3Cg id='l' data-name='l'%3E%3Cpath d='M187.58,79.81l-30.1,44.69a3.2,3.2,0,0,0,4.75,4.2L191.86,103a1.2,1.2,0,0,1,2,.91v80.46a1.2,1.2,0,0,1-2.12.77L102.18,77.93A15.35,15.35,0,0,0,90.47,72.5H87.34A15.34,15.34,0,0,0,72,87.84V201.16A15.34,15.34,0,0,0,87.34,216.5h0a15.35,15.35,0,0,0,13.08-7.31l30.1-44.69a3.2,3.2,0,0,0-4.75-4.2L96.14,186a1.2,1.2,0,0,1-2-.91V104.61a1.2,1.2,0,0,1,2.12-.77l89.55,107.23a15.35,15.35,0,0,0,11.71,5.43h3.13A15.34,15.34,0,0,0,216,201.16V87.84A15.34,15.34,0,0,0,200.66,72.5h0A15.35,15.35,0,0,0,187.58,79.81Z'/%3E%3C/g%3E%3C/svg%3E";
 
-#[ext_contract(ext_self)]
-pub trait ExtSelf {
-    fn handle_get_whitelisted_tokens_result() -> Vec<AccountId>;
-    fn handle_number_of_pools() -> u64;
-}
-
-#[near_bindgen()]
+#[near_bindgen]
 impl Contract {
-    pub fn set_message(&mut self, message: String) {
-        self.message = message;
-    }
-
-    pub fn get_message(&self) -> String {
-        self.message.clone()
-    }
-
-    pub fn get_whitelisted_tokens(&self) -> Promise {
-        let prepaid_gas = env::prepaid_gas();
-        ext_ref_finance::get_whitelisted_tokens(&REF_EXCHANGE_ADDRESS.to_string(), 0, prepaid_gas).then(
-            ext_self::handle_get_whitelisted_tokens_result(
-                &env::current_account_id(),
-                0,
-                prepaid_gas
-            ),
-        )
-    }
-
-    pub fn get_number_of_pools(&self) -> Promise {
-        let prepaid_gas = env::prepaid_gas();
-        ext_ref_finance::get_number_of_pools(&REF_EXCHANGE_ADDRESS.to_string(), 0, prepaid_gas).then(
-            ext_self::handle_number_of_pools(
-                &env::current_account_id(),
-                0,
-                prepaid_gas
-            ),
-        )
-    }
-
-    pub fn get_simple(&self) -> Promise {
-        let prepaid_gas = env::prepaid_gas();
-        ext_ref_finance::get_whitelisted_tokens(&REF_EXCHANGE_ADDRESS.to_string(), 0, prepaid_gas)
-    }
-
-    #[private]
-    pub fn handle_get_whitelisted_tokens_result(&mut self) -> Vec<AccountId> {
-        assert_eq!(env::promise_results_count(), 1, "ERR_TOO_MANY_RESULTS");
-        match env::promise_result(0) {
-            PromiseResult::NotReady => unreachable!(),
-            PromiseResult::Successful(val) => {
-                if let Ok(whitelist) = near_sdk::serde_json::from_slice::<Vec<AccountId>>(&val) {
-                    whitelist
-                } else {
-                    env::panic(b"ERR_WRONG_VAL_RECEIVED")
-                }
-            }
-            PromiseResult::Failed => env::panic(b"ERR_CALL_FAILED"),
-        }
-    }
-
-    pub fn handle_number_of_pools(&mut self) -> u64 {
-        match env::promise_result(0) {
-            PromiseResult::NotReady => unreachable!(),
-            PromiseResult::Successful(val) => {
-                if let Ok(number) = near_sdk::serde_json::from_slice::<u64>(&val) {
-                    number
-                } else {
-                    env::panic(b"ERR_WRONG_VAL_RECEIVED")
-                }
+    /// Initializes the contract with the given total supply owned by the given `owner_id` with
+    /// default metadata (for example purposes only).
+    #[init]
+    pub fn new_default_meta(owner_id: ValidAccountId, total_supply: U128) -> Self {
+        Self::new(
+            owner_id,
+            total_supply,
+            FungibleTokenMetadata {
+                spec: FT_METADATA_SPEC.to_string(),
+                name: "Example NEAR fungible token".to_string(),
+                symbol: "EXAMPLE".to_string(),
+                icon: Some(DATA_IMAGE_SVG_NEAR_ICON.to_string()),
+                reference: None,
+                reference_hash: None,
+                decimals: 24,
             },
-            PromiseResult::Failed => env::panic(b"ERR_CALL_FAILED"),
-        }
+        )
+    }
+
+    /// Initializes the contract with the given total supply owned by the given `owner_id` with
+    /// the given fungible token metadata.
+    #[init]
+    pub fn new(
+        owner_id: ValidAccountId,
+        total_supply: U128,
+        metadata: FungibleTokenMetadata,
+    ) -> Self {
+        assert!(!env::state_exists(), "Already initialized");
+        metadata.assert_valid();
+        let mut this = Self {
+            token: FungibleToken::new(b"a".to_vec()),
+            metadata: LazyOption::new(b"m".to_vec(), Some(&metadata)),
+        };
+        this.token.internal_register_account(owner_id.as_ref());
+        this.token.internal_deposit(owner_id.as_ref(), total_supply.into());
+        this
+    }
+
+    fn on_account_closed(&mut self, account_id: AccountId, balance: Balance) {
+        log!("Closed @{} with {}", account_id, balance);
+    }
+
+    fn on_tokens_burned(&mut self, account_id: AccountId, amount: Balance) {
+        log!("Account @{} burned {}", account_id, amount);
     }
 }
 
+near_contract_standards::impl_fungible_token_core!(Contract, token, on_tokens_burned);
+near_contract_standards::impl_fungible_token_storage!(Contract, token, on_account_closed);
 
-#[cfg(test)]
-mod test {
-    use super::*;
+#[near_bindgen]
+impl FungibleTokenMetadataProvider for Contract {
+    fn ft_metadata(&self) -> FungibleTokenMetadata {
+        self.metadata.get().unwrap()
+    }
+}
+
+#[cfg(all(test, not(target_arch = "wasm32")))]
+mod tests {
+    use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::MockedBlockchain;
-    use near_sdk::{testing_env, VMContext};
-    use near_sdk::serde::de::Unexpected::Str;
+    use near_sdk::{testing_env, Balance};
 
-    fn get_context(predecessor_account_id: String, storage_usage: u64) -> VMContext {
-        VMContext {
-            current_account_id: "some.cool.testnet".to_string(),
-            signer_account_id: "some.signer.testnet".to_string(),
-            signer_account_pk: vec![0, 1, 2, 3],
-            predecessor_account_id,
-            input: vec![],
-            block_index: 0,
-            block_timestamp: 0,
-            account_balance: 0,
-            account_locked_balance: 0,
-            storage_usage,
-            attached_deposit: 0,
-            prepaid_gas: 10u64.pow(18),
-            random_seed: vec![1, 2, 3],
-            is_view: false,
-            output_data_receivers: vec![],
-            epoch_height: 10,
-        }
+    use super::*;
+
+    const TOTAL_SUPPLY: Balance = 1_000_000_000_000_000;
+
+    fn get_context(predecessor_account_id: ValidAccountId) -> VMContextBuilder {
+        let mut builder = VMContextBuilder::new();
+        builder
+            .current_account_id(accounts(0))
+            .signer_account_id(predecessor_account_id.clone())
+            .predecessor_account_id(predecessor_account_id);
+        builder
     }
 
     #[test]
-    fn set_message() {
-        let context = get_context("hello.testnet".to_string(), 0);
-        testing_env!(context);
-        let mut contract = Contract { message: String::new() };
-        let message = "Hello".to_string();
-        contract.set_message(message.clone());
-        assert_eq!(contract.message, message, "Expected message to contain \"Hello\"");
+    fn test_new() {
+        let mut context = get_context(accounts(1));
+        testing_env!(context.build());
+        let contract = Contract::new_default_meta(accounts(1).into(), TOTAL_SUPPLY.into());
+        testing_env!(context.is_view(true).build());
+        assert_eq!(contract.ft_total_supply().0, TOTAL_SUPPLY);
+        assert_eq!(contract.ft_balance_of(accounts(1)).0, TOTAL_SUPPLY);
     }
 
     #[test]
-    fn get_message() {
-        let context = get_context("hello.testnet".to_string(), 0);
-        testing_env!(context);
-        let mut contract = Contract { message: String::new() };
-        let message = "Hello".to_string();
-        contract.set_message(message.clone());
-        assert_eq!(contract.get_message(), message, "Expected to return \"Hello\"")
+    #[should_panic(expected = "The contract is not initialized")]
+    fn test_default() {
+        let context = get_context(accounts(1));
+        testing_env!(context.build());
+        let _contract = Contract::default();
+    }
+
+    #[test]
+    fn test_transfer() {
+        let mut context = get_context(accounts(2));
+        testing_env!(context.build());
+        let mut contract = Contract::new_default_meta(accounts(2).into(), TOTAL_SUPPLY.into());
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(contract.storage_balance_bounds().min.into())
+            .predecessor_account_id(accounts(1))
+            .build());
+        // Paying for account registration, aka storage deposit
+        contract.storage_deposit(None, None);
+
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(1)
+            .predecessor_account_id(accounts(2))
+            .build());
+        let transfer_amount = TOTAL_SUPPLY / 3;
+        contract.ft_transfer(accounts(1), transfer_amount.into(), None);
+
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .account_balance(env::account_balance())
+            .is_view(true)
+            .attached_deposit(0)
+            .build());
+        assert_eq!(contract.ft_balance_of(accounts(2)).0, (TOTAL_SUPPLY - transfer_amount));
+        assert_eq!(contract.ft_balance_of(accounts(1)).0, transfer_amount);
     }
 }
