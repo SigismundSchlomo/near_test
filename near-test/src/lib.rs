@@ -1,3 +1,4 @@
+use near_contract_standards::storage_management::StorageBalance;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::json_types::{ValidAccountId, U128};
 use near_sdk::{env, ext_contract, near_bindgen, AccountId, Gas, Promise, PromiseResult};
