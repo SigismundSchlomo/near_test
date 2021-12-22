@@ -1,7 +1,7 @@
 use near_contract_standards::fungible_token::FungibleToken;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::json_types::{ValidAccountId, U128};
-use near_sdk::{env, log, near_bindgen, AccountId, Balance, PanicOnDefault, PromiseOrValue};
+use near_sdk::{env, log, near_bindgen, AccountId, Balance, PanicOnDefault, PromiseOrValue, Promise};
 
 use crate::utils::*;
 
@@ -73,12 +73,7 @@ impl Contract {
         self.token
             .internal_withdraw(&env::predecessor_account_id(), tokens);
         self.decrement_stake(deposit.into());
-        self.token.internal_transfer(
-            &env::current_account_id(),
-            &env::predecessor_account_id(),
-            deposit,
-            None,
-        );
+        Promise::new(env::predecessor_account_id()).transfer(deposit);
     }
 }
 
@@ -123,7 +118,6 @@ mod tests {
     use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::MockedBlockchain;
     use near_sdk::{testing_env, Balance};
-    use std::ops::Add;
 
     use super::*;
 
@@ -212,6 +206,7 @@ mod tests {
         contract.storage_deposit(None, None);
 
         let attached_deposit = 1_000_000_000_000_000_000_000_000; // 1 NEAR in yoctoNEAR
+        let tokens = attached_deposit / contract.get_token_price();
         testing_env!(context
             .storage_usage(env::storage_usage())
             .attached_deposit(attached_deposit)
@@ -219,9 +214,40 @@ mod tests {
             .build());
         contract.stake();
 
-        let tokens = attached_deposit / contract.get_token_price();
         assert_eq!(contract.total_stake, TOTAL_STAKE + tokens);
         assert_eq!(contract.token.total_supply, TOTAL_SUPPLY + tokens);
+    }
+
+    #[test]
+    fn test_unstake() {
+        let mut context = get_context(accounts(1));
+        testing_env!(context.build());
+        let mut contract = Contract::init(accounts(2), TOTAL_SUPPLY.into(), TOTAL_STAKE.into());
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(contract.storage_balance_bounds().min.into())
+            .predecessor_account_id(accounts(1))
+            .build());
+        // Paying for account registration, aka storage deposit
+        contract.storage_deposit(None, None);
+
+        let attached_deposit = 1_000_000_000_000_000_000_000_000; // 1 NEAR in yoctoNEAR
+        let tokens = attached_deposit / contract.get_token_price();
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(attached_deposit)
+            .predecessor_account_id(accounts(1))
+            .build());
+        contract.stake();
+
+        testing_env!(context
+        .storage_usage(env::storage_usage())
+        .predecessor_account_id(accounts(1))
+        .build());
+
+        contract.unstake(tokens.into());
+        assert_eq!(contract.total_stake, TOTAL_STAKE);
+        assert_eq!(contract.token.total_supply, TOTAL_SUPPLY);
     }
 
     #[test]

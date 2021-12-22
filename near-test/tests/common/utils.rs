@@ -1,4 +1,4 @@
-use near_sdk_sim::{init_simulator, to_yocto, STORAGE_AMOUNT, UserAccount, deploy, ContractAccount};
+use near_sdk_sim::{init_simulator, UserAccount, deploy, ContractAccount};
 use near_test::ContractContract as TestContract;
 
 near_sdk_sim::lazy_static_include::lazy_static_include_bytes! {
