@@ -108,6 +108,7 @@ impl Contract {
         }
     }
 
+    //TODO: Build in methods. Research why we need them
     fn on_account_closed(&mut self, account_id: AccountId, balance: Balance) {
         log!("Closed @{} with {}", account_id, balance);
     }
@@ -122,6 +123,7 @@ mod tests {
     use near_sdk::test_utils::{accounts, VMContextBuilder};
     use near_sdk::MockedBlockchain;
     use near_sdk::{testing_env, Balance};
+    use std::ops::Add;
 
     use super::*;
 
@@ -141,11 +143,22 @@ mod tests {
     fn test_new() {
         let mut context = get_context(accounts(1));
         testing_env!(context.build());
-        let contract = Contract::init(accounts(1).into(), TOTAL_SUPPLY.into(), TOTAL_STAKE.into());
+        let contract = Contract::init(accounts(1), TOTAL_SUPPLY.into(), TOTAL_STAKE.into());
         testing_env!(context.is_view(true).build());
         assert_eq!(contract.ft_total_supply().0, TOTAL_SUPPLY);
         assert_eq!(contract.ft_balance_of(accounts(1)).0, TOTAL_SUPPLY);
-        assert_eq!(contract.total_stake, TOTAL_STAKE)
+        assert_eq!(contract.total_stake, TOTAL_STAKE);
+    }
+
+    #[test]
+    fn test_reinit() {
+        let mut context = get_context(accounts(1));
+        testing_env!(context.build());
+        let contract = Contract::reinit(accounts(1), TOTAL_SUPPLY.into(), TOTAL_STAKE.into());
+        testing_env!(context.is_view(true).build());
+        assert_eq!(contract.ft_total_supply().0, TOTAL_SUPPLY);
+        assert_eq!(contract.ft_balance_of(accounts(1)).0, TOTAL_SUPPLY);
+        assert_eq!(contract.total_stake, TOTAL_STAKE);
     }
 
     #[test]
@@ -154,6 +167,61 @@ mod tests {
         let context = get_context(accounts(1));
         testing_env!(context.build());
         let _contract = Contract::default();
+    }
+
+    #[test]
+    fn test_stake_increment() {
+        let context = get_context(accounts(1));
+        testing_env!(context.build());
+        let mut contract = Contract::init(accounts(1), TOTAL_SUPPLY.into(), TOTAL_STAKE.into());
+        let tokens_to_add = 1_000_000_000_000_000_000_000_000;
+        contract.increment_stake(tokens_to_add);
+        assert_eq!(contract.total_stake, TOTAL_STAKE + tokens_to_add);
+    }
+
+    #[test]
+    fn test_stake_decrement() {
+        let context = get_context(accounts(1));
+        testing_env!(context.build());
+        let mut contract = Contract::init(accounts(1), TOTAL_SUPPLY.into(), TOTAL_STAKE.into());
+        let tokens_to_sub = 1_000_000_000_000_000_000_000_000;
+        contract.decrement_stake(tokens_to_sub);
+        assert_eq!(contract.total_stake, TOTAL_STAKE - tokens_to_sub);
+    }
+
+    #[test]
+    fn test_get_token_price() {
+        let context = get_context(accounts(1));
+        testing_env!(context.build());
+        let contract = Contract::init(accounts(1), TOTAL_SUPPLY.into(), TOTAL_STAKE.into());
+        let token_price = TOTAL_STAKE / TOTAL_SUPPLY;
+        assert_eq!(contract.get_token_price(), token_price);
+    }
+
+    #[test]
+    fn test_stake() {
+        let mut context = get_context(accounts(1));
+        testing_env!(context.build());
+        let mut contract = Contract::init(accounts(2), TOTAL_SUPPLY.into(), TOTAL_STAKE.into());
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(contract.storage_balance_bounds().min.into())
+            .predecessor_account_id(accounts(1))
+            .build());
+        // Paying for account registration, aka storage deposit
+        contract.storage_deposit(None, None);
+
+        let attached_deposit = 1_000_000_000_000_000_000_000_000; // 1 NEAR in yoctoNEAR
+        testing_env!(context
+            .storage_usage(env::storage_usage())
+            .attached_deposit(attached_deposit)
+            .predecessor_account_id(accounts(1))
+            .build());
+        contract.stake();
+
+        let tokens = attached_deposit / contract.get_token_price();
+        assert_eq!(contract.total_stake, TOTAL_STAKE + tokens);
+        assert_eq!(contract.token.total_supply, TOTAL_SUPPLY + tokens);
     }
 
     #[test]
