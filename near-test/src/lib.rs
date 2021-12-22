@@ -72,7 +72,7 @@ impl Contract {
 
         self.token
             .internal_withdraw(&env::predecessor_account_id(), tokens);
-        self.decrement_stake(deposit.into());
+        self.decrement_stake(deposit);
         Promise::new(env::predecessor_account_id()).transfer(deposit);
     }
 }
@@ -103,7 +103,6 @@ impl Contract {
         }
     }
 
-    //TODO: Build in methods. Research why we need them
     fn on_account_closed(&mut self, account_id: AccountId, balance: Balance) {
         log!("Closed @{} with {}", account_id, balance);
     }
