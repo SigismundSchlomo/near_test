@@ -1,11 +1,6 @@
-use near_contract_standards::fungible_token::metadata::{
-    FungibleTokenMetadata, FungibleTokenMetadataProvider, FT_METADATA_SPEC,
-};
 use near_contract_standards::fungible_token::FungibleToken;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::LazyOption;
 use near_sdk::json_types::{ValidAccountId, U128};
-use near_sdk::PromiseOrValue::Promise;
 use near_sdk::{env, log, near_bindgen, AccountId, Balance, PanicOnDefault, PromiseOrValue};
 
 use crate::utils::*;
@@ -23,7 +18,7 @@ near_contract_standards::impl_fungible_token_storage!(Contract, token, on_accoun
 pub struct Contract {
     //FT has 24 decimals
     token: FungibleToken,
-    total_stake: u128,
+    total_stake: Balance,
 }
 
 #[near_bindgen]
@@ -52,30 +47,38 @@ impl Contract {
         let tokens = env::attached_deposit() / token_price; // attached deposit is delivered in yoctoNEAR
         self.token
             .internal_deposit(&env::predecessor_account_id(), tokens);
-        if let Some(stake) = self.total_stake.checked_add(tokens) {
-            self.total_stake = stake;
-        } else {
-            env::panic(b"ERR_TOTAL_STAKE_OVERFLOW_OCCURED");
-        }
+        self.increment_stake(tokens);
     }
 
     pub fn unstake(&mut self, tokens: U128) {
-        let user_balance = self
+        let user_balance: u128 = self
             .token
-            .ft_balance_of(validate_account_id(env::predecessor_account_id()));
+            .ft_balance_of(validate_account_id(env::predecessor_account_id()))
+            .into();
+
+        let tokens: u128 = tokens.into();
 
         assert!(tokens <= user_balance, "Sender has not enough tokens");
         let token_price = self.get_token_price();
-        let deposit = if let Ok(deposit) = token_price.checked_mul(tokens.into()) {
+        let deposit = if let Some(deposit) = token_price.checked_mul(tokens) {
             deposit
         } else {
             env::panic(b"ERR_DEPOSIT_OVERFLOW");
         };
-        assert!(deposit <= self.total_stake, "Total stake is less then deposit");
+        assert!(
+            deposit <= self.total_stake,
+            "Total stake is less then deposit"
+        );
 
-        self.token.internal_withdraw(&env::predecessor_account_id(), tokens.into()); // tokens or deposit ???
+        self.token
+            .internal_withdraw(&env::predecessor_account_id(), tokens);
         self.decrement_stake(deposit.into());
-        self.token.internal_transfer(env::current_account_id().as_ref(), env::predecessor_account_id().as_ref(), deposit, None);
+        self.token.internal_transfer(
+            &env::current_account_id(),
+            &env::predecessor_account_id(),
+            deposit,
+            None,
+        );
     }
 }
 
@@ -98,7 +101,11 @@ impl Contract {
     }
 
     fn increment_stake(&mut self, amount: u128) {
-
+        if let Some(stake) = self.total_stake.checked_add(amount) {
+            self.total_stake = stake;
+        } else {
+            env::panic(b"ERR_TOTAL_STAKE_OVERFLOW_OCCURED");
+        }
     }
 
     fn on_account_closed(&mut self, account_id: AccountId, balance: Balance) {
@@ -118,7 +125,8 @@ mod tests {
 
     use super::*;
 
-    const TOTAL_SUPPLY: Balance = 1_000_000_000_000_000;
+    const TOTAL_SUPPLY: Balance = 20_000_000_000_000_000_000_000_000_000; //20_000 TK
+    const TOTAL_STAKE: Balance = 25_000_000_000_000_000_000_000_000_000; //25_000 NEAR
 
     fn get_context(predecessor_account_id: ValidAccountId) -> VMContextBuilder {
         let mut builder = VMContextBuilder::new();
@@ -129,29 +137,31 @@ mod tests {
         builder
     }
 
-    // #[test]
-    // fn test_new() {
-    //     let mut context = get_context(accounts(1));
-    //     testing_env!(context.build());
-    //     let contract = Contract::new_default_meta(accounts(1).into(), TOTAL_SUPPLY.into());
-    //     testing_env!(context.is_view(true).build());
-    //     assert_eq!(contract.ft_total_supply().0, TOTAL_SUPPLY);
-    //     assert_eq!(contract.ft_balance_of(accounts(1)).0, TOTAL_SUPPLY);
-    // }
-    //
-    // #[test]
-    // #[should_panic(expected = "The contract is not initialized")]
-    // fn test_default() {
-    //     let context = get_context(accounts(1));
-    //     testing_env!(context.build());
-    //     let _contract = Contract::default();
-    // }
+    #[test]
+    fn test_new() {
+        let mut context = get_context(accounts(1));
+        testing_env!(context.build());
+        let contract = Contract::init(accounts(1).into(), TOTAL_SUPPLY.into(), TOTAL_STAKE.into());
+        testing_env!(context.is_view(true).build());
+        assert_eq!(contract.ft_total_supply().0, TOTAL_SUPPLY);
+        assert_eq!(contract.ft_balance_of(accounts(1)).0, TOTAL_SUPPLY);
+        assert_eq!(contract.total_stake, TOTAL_STAKE)
+    }
+
+    #[test]
+    #[should_panic(expected = "The contract is not initialized")]
+    fn test_default() {
+        let context = get_context(accounts(1));
+        testing_env!(context.build());
+        let _contract = Contract::default();
+    }
 
     #[test]
     fn test_transfer() {
         let mut context = get_context(accounts(2));
         testing_env!(context.build());
-        let mut contract = Contract::new_default_meta(accounts(2).into(), TOTAL_SUPPLY.into());
+        let mut contract =
+            Contract::init(accounts(2).into(), TOTAL_SUPPLY.into(), TOTAL_STAKE.into());
         testing_env!(context
             .storage_usage(env::storage_usage())
             .attached_deposit(contract.storage_balance_bounds().min.into())
