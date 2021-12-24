@@ -14,6 +14,9 @@ pub const GAS: Gas = 300_000_000_000_000;
 pub const REFERRAL_ACCOUNT: &str = "kuznietsov.testnet";
 pub const REF_EXCHANGE_ADDRESS: &str = "exchange.ref-dev.testnet";
 
+//TODO:Most integration functionality should be wrote into frontend code. For example in wrapper.
+//TODO:Decide that should be added in smart contract code
+
 #[ext_contract(ext_ref_finance)]
 pub trait RefFinance {
     fn storage_deposit(
