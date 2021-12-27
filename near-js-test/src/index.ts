@@ -1,14 +1,15 @@
-const {KeyPair, keyStores, connect, WalletConnection, Contract} = require("near-api-js");
-const {getConfig} = require("./near");
-const {BN} = require("bn.js");
+import {Account, keyStores, connect, WalletConnection, Contract} from "near-api-js";
+import {FunctionCallOptions} from "near-api-js/lib/account";
+import BN from "bn.js";
+import {getConfig} from "./near";
 
 const REF_EXCHANGE_CONTRACT_ID = "exchange.ref-dev.testnet";
 const TEST_CONTRACT_ID = "dev-1639648769225-57824237775189";
 const ALLOWANCE = "2500000000000";
 const ONE_NEAR_IN_YOCTO = "1000000000000000000000000";
 
-const registerInExchange = async (account) => {
-  const options = {
+const registerInExchange = async (account: Account) => {
+  const options: FunctionCallOptions = {
     contractId: REF_EXCHANGE_CONTRACT_ID,
     methodName: "storage_deposit",
     args: {},
