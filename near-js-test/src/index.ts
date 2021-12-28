@@ -3,7 +3,7 @@ import {getConnectionConfig, registerInExchange} from "./near-utils";
 import {getConfig} from "./config";
 import {
   depositFunds,
-  getRefExchangeContract,
+  getRefExchangeContract, getReturn,
   getUsersDeposit,
   getWhitelistedTokens,
   isWhitelisted
@@ -17,21 +17,10 @@ const AURORA_TEST_POOL_ID = 7;
 
 //TODO: Function to sort pools by tokens
 //TODO: Function to retrieve info about swap with current settings
-//TODO: Function to deposit tokens to ref finance contract
 //TODO: Function to swap
 //TODO: Function to withdraw tokens
 
 //TODO: Functionality to handle personal whitelisted tokens ??? Research this feature
-
-//
-// const swap = (account: Account) => {
-//   const callOptions: FunctionCallOptions = {
-//     contractId: REF_EXCHANGE_CONTRACT_ID,
-//     methodName: "swap",
-//     args: {}, //TODO: Add args
-//
-//   }
-// }
 
 //TODO: Improve near object handling
 (async function () {
@@ -56,7 +45,20 @@ const AURORA_TEST_POOL_ID = 7;
   const userDeposit = await getUsersDeposit(account);
   console.log(userDeposit);
 
-  const depositResult = await depositFunds(account, "wrap.testnet", "1000000000000000000000000");
-  console.log(depositResult);
+  try {
+    const depositResult = await depositFunds(account, "wrap.testnet", "1000000000000000000000000");
+    console.log(depositResult);
+  } catch (error) {
+    console.log(error);
+  }
+
+  try {
+    const result = await getReturn(account, AURORA_TEST_POOL_ID, 'aurora.fakes.testnet', "10000000000000000", "wrap.testnet");
+    console.log(result);
+  } catch (error) {
+    console.log(error);
+  }
+
+
 
 })();

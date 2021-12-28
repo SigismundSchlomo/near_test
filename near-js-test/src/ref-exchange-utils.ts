@@ -7,17 +7,29 @@ import {FinalExecutionOutcome} from "near-api-js/lib/providers";
 const REF_EXCHANGE_CONTRACT_ID = getConfig().ref_exchange_contract_id;
 const ALLOWANCE = getConfig().allowance;
 //TODO: Function to check if exchange registered for token
-//TODO: Function to check if token whitelisted
 
 export const getRefExchangeContract = (account: Account) => {
   return new Contract(
     account,
     REF_EXCHANGE_CONTRACT_ID,
     {
-      viewMethods: ["get_whitelisted_tokens", "get_deposits"],
+      viewMethods: ["get_whitelisted_tokens", "get_deposits", "get_return"],
       changeMethods: []
     }
   )
+}
+
+export const getReturn = async (account: Account, poolId: number, tokenInId: string, amountIn: string, tokenOutId: string) => {
+  const swapAction = { //TODO: Add ref exchange type - swap action
+    pool_id: poolId,
+    token_in: tokenInId,
+    amount_in: amountIn,
+    token_out: tokenOutId
+  }
+  const contract = getRefExchangeContract(account);
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  return await contract.get_return(swapAction);
 }
 
 //TODO: Add ref exchange types
@@ -48,7 +60,7 @@ export const depositFunds = async (account: Account, tokenId: string, amountInYo
   const callOptions: FunctionCallOptions = {
     contractId: tokenId,
     methodName: "ft_transfer_call",
-    args: {receiver_id: REF_EXCHANGE_CONTRACT_ID, amount: amountInYocto},
+    args: {receiver_id: REF_EXCHANGE_CONTRACT_ID, amount: amountInYocto, msg: ""},
     gas: new BN(ALLOWANCE, 10),
     attachedDeposit: new BN(1, 10) // 1 yoctoNEAR required by contract
   }
