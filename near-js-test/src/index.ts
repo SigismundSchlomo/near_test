@@ -1,36 +1,40 @@
-import {Account, keyStores, connect, WalletConnection, Contract} from "near-api-js";
+import {Account, connect, Contract} from "near-api-js";
 import {FunctionCallOptions} from "near-api-js/lib/account";
 import BN from "bn.js";
-import {getConfig} from "./near";
+import {getConnectionConfig, registerInExchange} from "./near";
+import {FinalExecutionOutcome} from "near-api-js/lib/providers";
+import {getConfig} from "./config";
 
-const REF_EXCHANGE_CONTRACT_ID = "exchange.ref-dev.testnet";
-const TEST_CONTRACT_ID = "dev-1639648769225-57824237775189";
-const ALLOWANCE = "2500000000000";
-const ONE_NEAR_IN_YOCTO = "1000000000000000000000000";
+const TEST_CONTRACT_ID = getConfig().test_contract_id;
+const REF_EXCHANGE_CONTRACT_ID = getConfig().ref_exchange_contract_id;
 
-const registerInExchange = async (account: Account) => {
-  const options: FunctionCallOptions = {
-    contractId: REF_EXCHANGE_CONTRACT_ID,
-    methodName: "storage_deposit",
-    args: {},
-    gas: new BN(ALLOWANCE, 10),
-    attachedDeposit: new BN(ONE_NEAR_IN_YOCTO, 10).mul(new BN(0.125)) // 0.125 near
-  }
-  return await account.functionCall(
-    options
-  )
-}
+const AURORA_TEST_POOL_ID = 7;
+
+
+//TODO: Function to sort pools by tokens
+//TODO: Function to retrieve info about swap with current settings
+//TODO: Function to deposit tokens to ref finance contract
+//TODO: Function to swap
+//TODO: Function to withdraw tokens
+
+//TODO: Load list of whitelisted tokens
+
+//TODO: Functionality to handle personal whitelisted tokens ???
+
+//TODO: Util function to get near in yoctoNear
+
+
 
 (async function () {
-  const config = getConfig();
+  const config = getConnectionConfig();
   const near = await connect(config);
 
   const account = await near.account(TEST_CONTRACT_ID);
 
   const registerResult = await registerInExchange(account);
   console.log(registerResult);
-  // const result = await account.viewFunction(REF_EXCHANGE_CONTRACT_ID, "get_pools", {from_index: 0, limit: 20});
-  // console.log(result);
 
+  const result = await account.viewFunction(REF_EXCHANGE_CONTRACT_ID, "get_pools", {from_index: 0, limit: 20});
+  console.log(result);
 
 })();
