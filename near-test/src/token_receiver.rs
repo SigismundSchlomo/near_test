@@ -33,7 +33,7 @@ impl FungibleTokenReceiver for Contract {
             msg,
             &token_in,
             1,
-            20_000_000_000_000
+            50_000_000_000_000
         );
         PromiseOrValue::Value(U128(0))
     }
