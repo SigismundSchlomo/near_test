@@ -1,7 +1,13 @@
 import {Account, connect, Contract} from "near-api-js";
 import {getConnectionConfig, registerInExchange} from "./near-utils";
 import {getConfig} from "./config";
-import {getRefExchangeContract} from "./ref-exchange-utils";
+import {
+  depositFunds,
+  getRefExchangeContract,
+  getUsersDeposit,
+  getWhitelistedTokens,
+  isWhitelisted
+} from "./ref-exchange-utils";
 
 const TEST_CONTRACT_ID = getConfig().test_contract_id;
 const REF_EXCHANGE_CONTRACT_ID = getConfig().ref_exchange_contract_id;
@@ -14,15 +20,8 @@ const AURORA_TEST_POOL_ID = 7;
 //TODO: Function to deposit tokens to ref finance contract
 //TODO: Function to swap
 //TODO: Function to withdraw tokens
-//TODO: Load list of whitelisted tokens
 
-//TODO: Functionality to handle personal whitelisted tokens ???
-
-
-
-// const depositExchangeToken = () => {
-//
-// }
+//TODO: Functionality to handle personal whitelisted tokens ??? Research this feature
 
 //
 // const swap = (account: Account) => {
@@ -39,6 +38,7 @@ const AURORA_TEST_POOL_ID = 7;
   const config = getConnectionConfig();
   const near = await connect(config);
 
+  //Account from which calls are made
   const account = await near.account(TEST_CONTRACT_ID);
 
   const registerResult = await registerInExchange(account);
@@ -47,10 +47,16 @@ const AURORA_TEST_POOL_ID = 7;
   const result = await account.viewFunction(REF_EXCHANGE_CONTRACT_ID, "get_pools", {from_index: 0, limit: 20});
   console.log(result);
 
-  const refContract = getRefExchangeContract(account);
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const whitelistedTokens = await refContract.get_whitelisted_tokens();
+  const whitelistedTokens = await getWhitelistedTokens(account);
   console.log(whitelistedTokens);
+
+  const whitelisted = await isWhitelisted(account, "wrap.testnet");
+  console.log(whitelisted);
+
+  const userDeposit = await getUsersDeposit(account);
+  console.log(userDeposit);
+
+  const depositResult = await depositFunds(account, "wrap.testnet", "1000000000000000000000000");
+  console.log(depositResult);
 
 })();

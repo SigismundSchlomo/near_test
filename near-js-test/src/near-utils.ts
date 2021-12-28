@@ -31,9 +31,9 @@ export const registerInExchange = async (account: Account): Promise<FinalExecuti
   return await registerInContract(account, REF_EXCHANGE_CONTRACT_ID)
 }
 
-export const registerInContract = async (account: Account, contract_id: string): Promise<FinalExecutionOutcome> => {
+export const registerInContract = async (account: Account, contractId: string): Promise<FinalExecutionOutcome> => {
   const options: FunctionCallOptions = {
-    contractId: contract_id,
+    contractId: contractId,
     methodName: "storage_deposit",
     args: {},
     gas: new BN(ALLOWANCE, 10),
