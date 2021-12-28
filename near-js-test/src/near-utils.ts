@@ -11,6 +11,7 @@ const CREDENTIALS_DIR = ".near-credentials";
 const REF_EXCHANGE_CONTRACT_ID = getConfig().ref_exchange_contract_id;
 const ALLOWANCE = getConfig().allowance;
 
+//TODO: Util function to get near in yoctoNear
 
 const credentialsPath = path.join(homedir(), CREDENTIALS_DIR);
 const keyStore = new keyStores.UnencryptedFileSystemKeyStore(credentialsPath);
