@@ -1,15 +1,23 @@
 use near_contract_standards::fungible_token::FungibleToken;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::json_types::{ValidAccountId, U128};
-use near_sdk::{env, log, near_bindgen, AccountId, Balance, PanicOnDefault, PromiseOrValue, Promise};
+use near_sdk::json_types::{ValidAccountId, U128, U64};
+use near_sdk::{
+    env, log, near_bindgen, AccountId, Balance, PanicOnDefault, Promise, PromiseOrValue,
+};
 
-use crate::utils::*;
+use crate::ref_utils::SwapAction;
+use crate::callbacks::{ext_self};
+use crate::contracts_calls::{ext_ref_finance};
 
-mod utils;
-mod token_receiver;
+mod callbacks;
+mod contracts_calls;
 mod ref_utils;
 mod storage_impl;
+mod token_receiver;
+mod utils;
 
+pub const REFERRAL_ACCOUNT: &str = "kuznietsov.testnet";
+pub const REF_EXCHANGE_ADDRESS: &str = "exchange.ref-dev.testnet";
 const ONE_TK_IN_YOCTO: u128 = 10u128.pow(24); // Based on near. Symbolize one TK in yoctoTK
 
 near_sdk::setup_alloc!();
@@ -39,14 +47,41 @@ impl Contract {
 
     #[init(ignore_state)]
     pub fn reinit(owner_id: ValidAccountId, token_total_supply: U128) -> Self {
-        Self::init(owner_id, token_total_supply )
+        Self::init(owner_id, token_total_supply)
     }
 
+    pub fn swap_single(
+        &mut self,
+        pool_id: U64,
+        token_in: AccountId,
+        amount_in: U128,
+        token_out: AccountId,
+        min_amount_out: U128,
+    ) -> Promise {
+        let action = SwapAction {
+            pool_id: pool_id.0,
+            token_in,
+            amount_in: Some(amount_in),
+            token_out,
+            min_amount_out,
+        };
+        ext_ref_finance::swap(
+            vec![action],
+            REFERRAL_ACCOUNT.to_string(),
+            &REF_EXCHANGE_ADDRESS.to_string(),
+            env::attached_deposit(),
+            20_000_000_000_000, //TODO: Calculate exact gas amount required to execute callback
+        )
+        .then(ext_self::swap_single_callback(
+            &env::current_account_id(),
+            0,
+            20_000_000_000_000, //TODO: Calculate exact gas amount required to execute callback
+        ))
+    }
 }
 
 /// Internal methods
 impl Contract {
-
     fn on_account_closed(&mut self, account_id: AccountId, balance: Balance) {
         log!("Closed @{} with {}", account_id, balance);
     }

@@ -2,18 +2,8 @@ use near_contract_standards::fungible_token::receiver::FungibleTokenReceiver;
 use near_sdk::json_types::{U128, ValidAccountId};
 use near_sdk::{env, PromiseOrValue, ext_contract, near_bindgen};
 
+use crate::contracts_calls::{ext_token};
 use crate::*;
-
-#[ext_contract(ext_token)]
-trait ExtTokens {
-    fn ft_transfer_call(
-        receiver_id: AccountId,
-        amount: U128,
-        memo: Option<String>,
-        msg: String,
-    ) -> PromiseOrValue<U127>;
-}
-
 
 #[near_bindgen]
 impl FungibleTokenReceiver for Contract {
