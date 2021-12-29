@@ -5,9 +5,9 @@ use near_sdk::{
     env, log, near_bindgen, AccountId, Balance, PanicOnDefault, Promise, PromiseOrValue,
 };
 
+use crate::callbacks::ext_self;
+use crate::contracts_calls::ext_ref_finance;
 use crate::ref_utils::SwapAction;
-use crate::callbacks::{ext_self};
-use crate::contracts_calls::{ext_ref_finance};
 
 mod callbacks;
 mod contracts_calls;
@@ -72,10 +72,25 @@ impl Contract {
             env::attached_deposit(),
             20_000_000_000_000, //TODO: Calculate exact gas amount required to execute callback
         )
-        .then(ext_self::swap_single_callback(
+        .then(ext_self::swap_callback(
             &env::current_account_id(),
             0,
             20_000_000_000_000, //TODO: Calculate exact gas amount required to execute callback
+        ))
+    }
+
+    pub fn swap(&mut self, actions: Vec<SwapAction>) -> Promise {
+        ext_ref_finance::swap(
+            actions,
+            REFERRAL_ACCOUNT.to_string(),
+            &REF_EXCHANGE_ADDRESS.to_string(),
+            env::attached_deposit(),
+            20_000_000_000_000,
+        )
+        .then(ext_self::swap_callback(
+            &env::current_account_id(),
+            0,
+            20_000_000_000_000,
         ))
     }
 }
