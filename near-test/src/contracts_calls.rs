@@ -21,5 +21,6 @@ pub trait ExtRefFinance {
         registration_only: Option<bool>,
     ) -> StorageBalance;
     fn swap(&mut self, actions: Vec<SwapAction>, referral_id: String) -> U128;
+    fn add_liquidity(&mut self, pool_id: u64, amounts: Vec<U128>);
 }
 

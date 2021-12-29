@@ -93,6 +93,17 @@ impl Contract {
             20_000_000_000_000,
         ))
     }
+
+    #[payable]
+    pub fn add_liquidity(&mut self, pool_id: u64, amounts: Vec<U128>) -> Promise {
+        ext_ref_finance::add_liquidity(
+            pool_id,
+            amounts,
+            &REF_EXCHANGE_ADDRESS.to_string(),
+            env::attached_deposit(),
+            20_000_000_000_000,
+        )
+    }
 }
 
 /// Internal methods
