@@ -52,7 +52,7 @@ impl Contract {
 
     pub fn swap_single(
         &mut self,
-        pool_id: U64,
+        pool_id: U64, //TODO: Change to primitive ???
         token_in: AccountId,
         amount_in: U128,
         token_out: AccountId,
@@ -103,6 +103,41 @@ impl Contract {
             env::attached_deposit(),
             20_000_000_000_000,
         )
+    }
+
+    #[payable]
+    pub fn create_position(
+        &mut self,
+        pool_id: u64,
+        amount_in_pool: U128,
+        token_in: AccountId,
+        amount_in: U128,
+        token_out: AccountId,
+        min_amount_out: U128,
+    ) -> Promise {
+        let action = SwapAction {
+            pool_id,
+            token_in,
+            amount_in: Some(amount_in),
+            token_out,
+            min_amount_out
+        };
+        ext_ref_finance::swap(
+            vec![action],
+            REFERRAL_ACCOUNT.to_string(),
+            &REF_EXCHANGE_ADDRESS.to_string(),
+            env::attached_deposit(), //Check if deposit works as expected
+            20_000_000_000_000
+        ).then(ext_self::create_position_callback(
+            pool_id,
+            amount_in_pool,
+            REF_EXCHANGE_ADDRESS.to_string(),
+            env::attached_deposit(),
+            20_000_000_000_000,
+            &env::current_account_id(),
+            0,
+            50_000_000_000_000,
+        ))
     }
 }
 
