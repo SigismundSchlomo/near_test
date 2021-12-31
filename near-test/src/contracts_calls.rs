@@ -38,4 +38,5 @@ pub trait ExtRefFinance {
 #[ext_contract(ext_ref_farming)]
 pub trait ExtRefFarming {
     fn withdraw_seed(&mut self, seed_id: SeedId, amount: U128);
+    fn claim_reward_by_seed(&mut self, seed_id: SeedId);
 }

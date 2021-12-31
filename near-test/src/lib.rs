@@ -172,6 +172,17 @@ impl Contract {
             200_000_000_000_000,
         )
     }
+
+    pub fn claim_reward(&mut self, pool_id: u64) -> Promise {
+        let seed_id: SeedId = format!("{}@{}", REF_EXCHANGE_ADDRESS, pool_id);
+        ext_ref_farming::claim_reward_by_seed(
+            seed_id,
+            &REF_FARMING_ADDRESS.to_string(),
+            env::attached_deposit(),
+            200_000_000_000_000,
+        )
+    }
+
 }
 
 /// Internal methods
