@@ -17,7 +17,8 @@ mod token_receiver;
 mod utils;
 
 pub const REFERRAL_ACCOUNT: &str = "kuznietsov.testnet";
-pub const REF_EXCHANGE_ADDRESS: &str = "exchange.ref-dev.testnet";
+pub const REF_EXCHANGE_ADDRESS: &str = "ref-finance-101.testnet";
+pub const REF_FARMING_ADDRESS: &str = "v2.ref-farming.testnet";
 const ONE_TK_IN_YOCTO: u128 = 10u128.pow(24); // Based on near. Symbolize one TK in yoctoTK
 
 near_sdk::setup_alloc!();
@@ -139,6 +140,26 @@ impl Contract {
             50_000_000_000_000,
         ))
     }
+
+    //User registration left on front end
+    #[payable]
+    pub fn stake_to_farm(&mut self, pool_id: u64, amount: U128) -> Promise{
+        let token_id = format!(":{}", pool_id);
+        let receiver_id = REF_FARMING_ADDRESS.to_string();
+        let memo = None;
+        let msg = "".to_string();
+        ext_ref_finance::mft_transfer_call(
+            token_id,
+            receiver_id,
+            amount,
+            memo,
+            msg,
+            &REF_EXCHANGE_ADDRESS.to_string(),
+            env::attached_deposit(), //Check if deposit works as expected
+            100_000_000_000_000
+        )
+    }
+
 }
 
 /// Internal methods
