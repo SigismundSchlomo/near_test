@@ -6,7 +6,7 @@ use near_sdk::{
 };
 
 use crate::callbacks::ext_self;
-use crate::contracts_calls::ext_ref_finance;
+use crate::contracts_calls::{ext_ref_farming, ext_ref_finance, SeedId};
 use crate::ref_utils::SwapAction;
 
 mod callbacks;
@@ -121,15 +121,16 @@ impl Contract {
             token_in,
             amount_in: Some(amount_in),
             token_out,
-            min_amount_out
+            min_amount_out,
         };
         ext_ref_finance::swap(
             vec![action],
             REFERRAL_ACCOUNT.to_string(),
             &REF_EXCHANGE_ADDRESS.to_string(),
             env::attached_deposit(), //Check if deposit works as expected
-            20_000_000_000_000
-        ).then(ext_self::create_position_callback(
+            20_000_000_000_000,
+        )
+        .then(ext_self::create_position_callback(
             pool_id,
             amount_in_pool,
             REF_EXCHANGE_ADDRESS.to_string(),
@@ -143,7 +144,7 @@ impl Contract {
 
     //User registration left on front end
     #[payable]
-    pub fn stake_to_farm(&mut self, pool_id: u64, amount: U128) -> Promise{
+    pub fn stake_to_farm(&mut self, pool_id: u64, amount: U128) -> Promise {
         let token_id = format!(":{}", pool_id);
         let receiver_id = REF_FARMING_ADDRESS.to_string();
         let memo = None;
@@ -156,10 +157,21 @@ impl Contract {
             msg,
             &REF_EXCHANGE_ADDRESS.to_string(),
             env::attached_deposit(), //Check if deposit works as expected
-            100_000_000_000_000
+            100_000_000_000_000,
         )
     }
 
+    #[payable]
+    pub fn unstake_from_farm(&mut self, pool_id: u64, amount: U128) -> Promise {
+        let seed_id: SeedId = format!("{}@{}", REF_EXCHANGE_ADDRESS, pool_id);
+        ext_ref_farming::withdraw_seed(
+            seed_id,
+            amount,
+            &REF_FARMING_ADDRESS.to_string(),
+            env::attached_deposit(),
+            200_000_000_000_000,
+        )
+    }
 }
 
 /// Internal methods

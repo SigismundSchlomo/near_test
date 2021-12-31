@@ -3,6 +3,9 @@ use near_contract_standards::storage_management::StorageBalance;
 use near_sdk::json_types::{ValidAccountId, U128};
 use near_sdk::{ext_contract, AccountId, PromiseOrValue};
 
+//The seed format is contract_address@pool_id
+pub(crate) type SeedId = String;
+
 #[ext_contract(ext_token)]
 pub trait ExtTokens {
     fn ft_transfer_call(
@@ -34,6 +37,5 @@ pub trait ExtRefFinance {
 
 #[ext_contract(ext_ref_farming)]
 pub trait ExtRefFarming {
-    //TODO: Add SeedId type
-    // fn withdraw_seed(&mut self, seed_id: SeedId, amount: U128);
+    fn withdraw_seed(&mut self, seed_id: SeedId, amount: U128);
 }
