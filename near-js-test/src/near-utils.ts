@@ -1,4 +1,4 @@
-import {Account, ConnectConfig, keyStores} from "near-api-js";
+import {Account, ConnectConfig, KeyPair, keyStores} from "near-api-js";
 import path from "path";
 import {homedir} from "os";
 import {getConfig} from "./config";
@@ -16,15 +16,23 @@ const ALLOWANCE = getConfig().allowance;
 const credentialsPath = path.join(homedir(), CREDENTIALS_DIR);
 const keyStore = new keyStores.UnencryptedFileSystemKeyStore(credentialsPath);
 
-export const getConnectionConfig = (): ConnectConfig => {
+export const getConnectionConfig =  (): ConnectConfig => {
+  // return {
+  //   keyStore,
+  //   networkId: "testnet",
+  //   nodeUrl: "https://rpc.testnet.near.org",
+  //   headers: {},
+  //   walletUrl: "https://wallet.testnet.near.org",
+  //   helperUrl: "https://helper.testnet.near.org",
+  // };
   return {
     keyStore,
-    networkId: "testnet",
-    nodeUrl: "https://rpc.testnet.near.org",
+    networkId: "mainnet",
+    nodeUrl: "https://rpc.mainnet.near.org",
     headers: {},
-    walletUrl: "https://wallet.testnet.near.org",
-    helperUrl: "https://helper.testnet.near.org",
-  };
+    walletUrl: "https://wallet.mainnet.near.org",
+    helperUrl: "https://helper.mainnet.near.org"
+  }
 }
 
 export const registerInExchange = async (account: Account): Promise<FinalExecutionOutcome> => {

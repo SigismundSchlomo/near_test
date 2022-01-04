@@ -5,3 +5,4 @@ near-test/Cargo.lock
 /neardev/
 /near-js-test/node_modules/
 /near-js-test/build/
+/near-js-test/.near-credentials/

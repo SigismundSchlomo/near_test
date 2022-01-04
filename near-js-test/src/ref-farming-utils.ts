@@ -31,14 +31,28 @@ export const listUserSeeds = async (account: Account): Promise<unknown> => {
 }
 
 //TODO: Add types
-export const claimReward = async (account: Account, pool_id: number): Promise<unknown> => {
+export const claimReward = async (account: Account, poolId: number): Promise<unknown> => {
   const callOptions: FunctionCallOptions = {
     contractId: DEV_CONTRACT_ID,
     methodName: "claim_reward",
     args: {
-      pool_id
+      pool_id: poolId
     },
     gas: new BN(ALLOWANCE, 10),
+  }
+  return await account.functionCall(callOptions);
+}
+
+export const withdrawReward = async (account: Account, tokenId: string, amount: string): Promise<unknown> => {
+  const callOptions: FunctionCallOptions = {
+    contractId: REF_FARMING_CONTRACT_ID,
+    methodName: "withdraw_reward",
+    args: {
+      token_id: tokenId,
+      amount: amount
+    },
+    gas: new BN(ALLOWANCE, 10),
+    attachedDeposit: new BN(1, 10),
   }
   return await account.functionCall(callOptions);
 }

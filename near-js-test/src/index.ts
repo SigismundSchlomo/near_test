@@ -1,4 +1,4 @@
-import {Account, connect, Contract} from "near-api-js";
+import {Account, connect, Contract, KeyPair, WalletConnection} from "near-api-js";
 import {getConnectionConfig, registerInExchange} from "./near-utils";
 import {getConfig} from "./config";
 import {
@@ -9,7 +9,7 @@ import {
   isWhitelisted, swap, SwapAction
 } from "./ref-exchange-utils";
 import exp from "constants";
-import {claimReward, listRewards, listUserSeeds} from "./ref-farming-utils";
+import {claimReward, listRewards, listUserSeeds, withdrawReward} from "./ref-farming-utils";
 
 const TEST_CONTRACT_ID = getConfig().test_contract_id;
 const REF_EXCHANGE_CONTRACT_ID = getConfig().ref_exchange_contract_id;
@@ -29,8 +29,8 @@ const ONE_NEAR_IN_YOCTO = Math.pow(10, 24);
   const near = await connect(config);
 
   //Account from which calls are made
-  const account = await near.account(TEST_CONTRACT_ID);
-
+  // const account = await near.account(TEST_CONTRACT_ID);
+  const account = await near.account("sigmund.near");
 
   try {
     const seeds = await listUserSeeds(account);
@@ -39,12 +39,12 @@ const ONE_NEAR_IN_YOCTO = Math.pow(10, 24);
     console.log(error);
   }
 
-  try {
-    const result = await claimReward(account, 0);
-    console.log(result);
-  } catch (error) {
-    console.log(error);
-  }
+  // try {
+  //   const result = await claimReward(account, 0);
+  //   console.log(result);
+  // } catch (error) {
+  //   console.log(error);
+  // }
 
   try {
     const rewards = await listRewards(account);
@@ -52,6 +52,13 @@ const ONE_NEAR_IN_YOCTO = Math.pow(10, 24);
   } catch (error) {
     console.log(error);
   }
+  //
+  // try {
+  //   const result = await withdrawReward(account, "dbio.near", "43755383311995");
+  //   console.log(result);
+  // } catch (error) {
+  //   console.log(error);
+  // }
 
   // try {
   //   const depositResult = await depositFunds(account, "wrap.testnet", "1000000000000000000000000");
