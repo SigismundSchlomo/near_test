@@ -86,4 +86,3 @@ export const swap = async (account: Account, actions: SwapAction[]): Promise<unk
   };
   return await account.functionCall(callOptions);
 }
-

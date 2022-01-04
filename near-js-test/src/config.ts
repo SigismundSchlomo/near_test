@@ -5,6 +5,7 @@
 export const getConfig = () => {
   return {
     ref_exchange_contract_id: "ref-finance-101.testnet",
+    ref_farming_contract_id: "v2.ref-farming.testnet",
     test_contract_id: "dev-1639648769225-57824237775189",
     allowance: "300000000000000"
   }
