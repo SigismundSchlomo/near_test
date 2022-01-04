@@ -80,6 +80,7 @@ impl Contract {
         ))
     }
 
+    #[payable]
     pub fn swap(&mut self, actions: Vec<SwapAction>) -> Promise {
         ext_ref_finance::swap(
             actions,

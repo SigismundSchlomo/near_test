@@ -5,8 +5,17 @@ import BN from "bn.js";
 import {FinalExecutionOutcome} from "near-api-js/lib/providers";
 
 const REF_EXCHANGE_CONTRACT_ID = getConfig().ref_exchange_contract_id;
+const DEV_CONTRACT_ID = getConfig().test_contract_id;
 const ALLOWANCE = getConfig().allowance;
 //TODO: Function to check if exchange registered for token
+
+export interface SwapAction {
+  pool_id: number;
+  token_in: string;
+  amount_in?: string;
+  token_out: string;
+  min_amount_out?: string;
+}
 
 export const getRefExchangeContract = (account: Account) => {
   return new Contract(
@@ -19,17 +28,17 @@ export const getRefExchangeContract = (account: Account) => {
   )
 }
 
-export const getReturn = async (account: Account, poolId: number, tokenInId: string, amountIn: string, tokenOutId: string) => {
-  const swapAction = { //TODO: Add ref exchange type - swap action
-    pool_id: poolId,
-    token_in: tokenInId,
-    amount_in: amountIn,
-    token_out: tokenOutId
-  }
+export const getReturn = async (account: Account, action: SwapAction) => {
+  // const swapAction: SwapAction = {
+  //   pool_id: poolId,
+  //   token_in: tokenInId,
+  //   amount_in: amountIn,
+  //   token_out: tokenOutId,
+  // }
   const contract = getRefExchangeContract(account);
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  return await contract.get_return(swapAction);
+  return await contract.get_return(action);
 }
 
 //TODO: Add ref exchange types
@@ -66,3 +75,15 @@ export const depositFunds = async (account: Account, tokenId: string, amountInYo
   }
   return await account.functionCall(callOptions);
 }
+
+export const swap = async (account: Account, actions: SwapAction[]): Promise<unknown> => {
+  const callOptions: FunctionCallOptions = {
+    contractId: DEV_CONTRACT_ID,
+    methodName: "swap",
+    args: {actions: actions},
+    gas: new BN(ALLOWANCE, 10),
+    attachedDeposit: new BN(1, 10) // 1 yoctoNEAR
+  };
+  return await account.functionCall(callOptions);
+}
+

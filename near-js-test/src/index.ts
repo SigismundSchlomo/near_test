@@ -6,23 +6,23 @@ import {
   getRefExchangeContract, getReturn,
   getUsersDeposit,
   getWhitelistedTokens,
-  isWhitelisted
+  isWhitelisted, swap, SwapAction
 } from "./ref-exchange-utils";
+import exp from "constants";
 
 const TEST_CONTRACT_ID = getConfig().test_contract_id;
 const REF_EXCHANGE_CONTRACT_ID = getConfig().ref_exchange_contract_id;
-
-const AURORA_TEST_POOL_ID = 7;
+const ONE_NEAR_IN_YOCTO = Math.pow(10, 24);
 
 
 //TODO: Function to sort pools by tokens
 //TODO: Function to retrieve info about swap with current settings
 //TODO: Function to swap
 //TODO: Function to withdraw tokens
-
 //TODO: Functionality to handle personal whitelisted tokens ??? Research this feature
-
 //TODO: Improve near object handling
+
+
 (async function () {
   const config = getConnectionConfig();
   const near = await connect(config);
@@ -30,35 +30,39 @@ const AURORA_TEST_POOL_ID = 7;
   //Account from which calls are made
   const account = await near.account(TEST_CONTRACT_ID);
 
-  const registerResult = await registerInExchange(account);
-  console.log(registerResult);
+  // try {
+  //   const depositResult = await depositFunds(account, "wrap.testnet", "1000000000000000000000000");
+  //   console.log(depositResult);
+  // } catch (error) {
+  //   console.log(error);
+  // }
 
-  const result = await account.viewFunction(REF_EXCHANGE_CONTRACT_ID, "get_pools", {from_index: 0, limit: 20});
-  console.log(result);
+  // const deposit = await getUsersDeposit(account);
+  // console.log(deposit);
 
-  const whitelistedTokens = await getWhitelistedTokens(account);
-  console.log(whitelistedTokens);
+  // try {
+  //   const expect = await getReturn(account, expectAction);
+  //   console.log(expect);
+  // } catch (error) {
+  //   console.log(error)
+  // }
+  // const swapAction: SwapAction = {
+  //   ...expectAction,
+  //     min_amount_out: expect
+  // }
+  // try {
+  //   const swapResult = await swap(account, [swapAction]);
+  //   console.log(swapAction);
+  // } catch (error) {
+  //   console.log(error);
+  // }
 
-  const whitelisted = await isWhitelisted(account, "wrap.testnet");
-  console.log(whitelisted);
-
-  const userDeposit = await getUsersDeposit(account);
-  console.log(userDeposit);
-
-  try {
-    const depositResult = await depositFunds(account, "wrap.testnet", "1000000000000000000000000");
-    console.log(depositResult);
-  } catch (error) {
-    console.log(error);
-  }
-
-  try {
-    const result = await getReturn(account, AURORA_TEST_POOL_ID, 'aurora.fakes.testnet', "10000000000000000", "wrap.testnet");
-    console.log(result);
-  } catch (error) {
-    console.log(error);
-  }
-
+  //TODO: Implement reinvest
+  //step 1 Claim rewards from pool
+  //step 2 Withdraw rewards from pool
+  //step 3 Swap tokens
+  //step 4 Add liquidity to pool
+  //step 5 Add shares to farming
 
 
 })();
