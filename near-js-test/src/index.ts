@@ -9,7 +9,7 @@ import {
   isWhitelisted, swap, SwapAction
 } from "./ref-exchange-utils";
 import exp from "constants";
-import {listRewards, listUserSeeds} from "./ref-farming-utils";
+import {claimReward, listRewards, listUserSeeds} from "./ref-farming-utils";
 
 const TEST_CONTRACT_ID = getConfig().test_contract_id;
 const REF_EXCHANGE_CONTRACT_ID = getConfig().ref_exchange_contract_id;
@@ -31,16 +31,24 @@ const ONE_NEAR_IN_YOCTO = Math.pow(10, 24);
   //Account from which calls are made
   const account = await near.account(TEST_CONTRACT_ID);
 
+
   try {
-    const rewards = await listRewards(account);
-    console.log(rewards);
+    const seeds = await listUserSeeds(account);
+    console.log(seeds);
   } catch (error) {
     console.log(error);
   }
 
   try {
-    const seeds = await listUserSeeds(account);
-    console.log(seeds);
+    const result = await claimReward(account, 0);
+    console.log(result);
+  } catch (error) {
+    console.log(error);
+  }
+
+  try {
+    const rewards = await listRewards(account);
+    console.log(rewards);
   } catch (error) {
     console.log(error);
   }

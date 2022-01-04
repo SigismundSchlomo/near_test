@@ -17,6 +17,7 @@ export interface SwapAction {
   min_amount_out?: string;
 }
 
+//TODO: refactor this garbage
 export const getRefExchangeContract = (account: Account) => {
   return new Contract(
     account,
