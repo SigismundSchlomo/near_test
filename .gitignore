@@ -3,3 +3,5 @@ near-test/Cargo.lock
 .idea/
 /Cargo.lock
 /neardev/
+/near-js-test/node_modules/
+/near-js-test/build/
