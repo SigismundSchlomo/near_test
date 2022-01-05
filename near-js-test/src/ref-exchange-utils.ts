@@ -8,6 +8,7 @@ import {registerInContract} from "./near-utils";
 const REF_EXCHANGE_CONTRACT_ID = getConfig().ref_exchange_contract_id;
 const DEV_CONTRACT_ID = getConfig().test_contract_id;
 const ALLOWANCE = getConfig().allowance;
+
 //TODO: Function to check if exchange registered for token
 
 export interface SwapAction {
@@ -100,3 +101,18 @@ export const getActionWithMinAmount = async (account: Account, action: SwapActio
     min_amount_out: expect
   }
 }
+
+export const addLiquidity = async (account: Account, poolId: number, amounts: string[], attachedDeposit: number): Promise<unknown> => {
+  const callOptions: FunctionCallOptions = {
+    contractId: DEV_CONTRACT_ID,
+    methodName: "add_liquidity",
+    args: {
+      pool_id: poolId,
+      amounts: amounts
+    },
+    gas: new BN(ALLOWANCE, 10),
+    attachedDeposit: new BN(attachedDeposit, 10),
+  }
+  return await account.functionCall(callOptions);
+}
+
