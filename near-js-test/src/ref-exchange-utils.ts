@@ -3,6 +3,7 @@ import {getConfig} from "./config";
 import {Account, Contract} from "near-api-js";
 import BN from "bn.js";
 import {FinalExecutionOutcome} from "near-api-js/lib/providers";
+import {registerInContract} from "./near-utils";
 
 const REF_EXCHANGE_CONTRACT_ID = getConfig().ref_exchange_contract_id;
 const DEV_CONTRACT_ID = getConfig().test_contract_id;
@@ -29,7 +30,7 @@ export const getRefExchangeContract = (account: Account) => {
   )
 }
 
-export const getReturn = async (account: Account, action: SwapAction) => {
+export const getReturn = async (account: Account, action: SwapAction): Promise<string> => {
   // const swapAction: SwapAction = {
   //   pool_id: poolId,
   //   token_in: tokenInId,
@@ -77,7 +78,11 @@ export const depositFunds = async (account: Account, tokenId: string, amountInYo
   return await account.functionCall(callOptions);
 }
 
-export const swap = async (account: Account, actions: SwapAction[]): Promise<unknown> => {
+export const registerInExchange = async (account: Account): Promise<FinalExecutionOutcome> => {
+  return await registerInContract(account, REF_EXCHANGE_CONTRACT_ID)
+}
+
+export const swap = async (account: Account, actions: SwapAction[]): Promise<FinalExecutionOutcome> => {
   const callOptions: FunctionCallOptions = {
     contractId: DEV_CONTRACT_ID,
     methodName: "swap",
@@ -86,4 +91,12 @@ export const swap = async (account: Account, actions: SwapAction[]): Promise<unk
     attachedDeposit: new BN(1, 10) // 1 yoctoNEAR
   };
   return await account.functionCall(callOptions);
+}
+
+export const getActionWithMinAmount = async (account: Account, action: SwapAction): Promise<SwapAction> => {
+  const expect = await getReturn(account, action);
+  return {
+    ...action,
+    min_amount_out: expect
+  }
 }

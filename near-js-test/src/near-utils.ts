@@ -11,32 +11,26 @@ const CREDENTIALS_DIR = ".near-credentials";
 const REF_EXCHANGE_CONTRACT_ID = getConfig().ref_exchange_contract_id;
 const ALLOWANCE = getConfig().allowance;
 
-//TODO: Util function to get near in yoctoNear
-
 const credentialsPath = path.join(homedir(), CREDENTIALS_DIR);
 const keyStore = new keyStores.UnencryptedFileSystemKeyStore(credentialsPath);
 
 export const getConnectionConfig =  (): ConnectConfig => {
-  // return {
-  //   keyStore,
-  //   networkId: "testnet",
-  //   nodeUrl: "https://rpc.testnet.near.org",
-  //   headers: {},
-  //   walletUrl: "https://wallet.testnet.near.org",
-  //   helperUrl: "https://helper.testnet.near.org",
-  // };
   return {
     keyStore,
-    networkId: "mainnet",
-    nodeUrl: "https://rpc.mainnet.near.org",
+    networkId: "testnet",
+    nodeUrl: "https://rpc.testnet.near.org",
     headers: {},
-    walletUrl: "https://wallet.mainnet.near.org",
-    helperUrl: "https://helper.mainnet.near.org"
-  }
-}
-
-export const registerInExchange = async (account: Account): Promise<FinalExecutionOutcome> => {
-  return await registerInContract(account, REF_EXCHANGE_CONTRACT_ID)
+    walletUrl: "https://wallet.testnet.near.org",
+    helperUrl: "https://helper.testnet.near.org",
+  };
+  // return {
+  //   keyStore,
+  //   networkId: "mainnet",
+  //   nodeUrl: "https://rpc.mainnet.near.org",
+  //   headers: {},
+  //   walletUrl: "https://wallet.mainnet.near.org",
+  //   helperUrl: "https://helper.mainnet.near.org"
+  // }
 }
 
 export const registerInContract = async (account: Account, contractId: string): Promise<FinalExecutionOutcome> => {
