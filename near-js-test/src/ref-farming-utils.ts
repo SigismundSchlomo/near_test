@@ -13,8 +13,7 @@ const ALLOWANCE = getConfig().allowance;
 
 //TODO: Move external calls to separate file
 
-//TODO: Add types
-export const listRewards = async (account: Account): Promise<unknown> => {
+export const listRewards = async (account: Account): Promise<any> => {
   return await account.viewFunction(
     REF_FARMING_CONTRACT_ID,
     "list_rewards",
@@ -24,7 +23,6 @@ export const listRewards = async (account: Account): Promise<unknown> => {
   )
 }
 
-//TODO: Add types
 export const listUserSeeds = async (account: Account): Promise<unknown> => {
   return await account.viewFunction(
     REF_FARMING_CONTRACT_ID,
@@ -35,7 +33,6 @@ export const listUserSeeds = async (account: Account): Promise<unknown> => {
   )
 }
 
-//TODO: Add types
 export const claimReward = async (account: Account, poolId: number): Promise<unknown> => {
   const callOptions: FunctionCallOptions = {
     contractId: DEV_CONTRACT_ID,

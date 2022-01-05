@@ -28,18 +28,26 @@ const TEST_POOL_ID = 0;
   //step 4 Add liquidity to pool
   //step 5 Add shares to farming
 
+
   try {
-    const args: CreatePositionArgs = {
-      poolId: 0,
-      tokenIn: "wrap.testnet",
-      amountIn: "10000000000000000000000000",
-      tokenOut: "rft.tokenfactory.testnet",
-    }
-    const result = await createPosition(account, args);
-    console.log(result);
+    const rewards = await listRewards(account);
+    console.log(rewards);
   } catch (error) {
     console.log(error);
   }
+
+  // try {
+  //   const args: CreatePositionArgs = {
+  //     poolId: 0,
+  //     tokenIn: "wrap.testnet",
+  //     amountIn: "10000000000000000000000000",
+  //     tokenOut: "rft.tokenfactory.testnet",
+  //   }
+  //   const result = await createPosition(account, args);
+  //   console.log(result);
+  // } catch (error) {
+  //   console.log(error);
+  // }
 
 
 })();
