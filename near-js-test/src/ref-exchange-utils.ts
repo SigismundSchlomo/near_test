@@ -102,7 +102,7 @@ export const getActionWithMinAmount = async (account: Account, action: SwapActio
   }
 }
 
-export const addLiquidity = async (account: Account, poolId: number, amounts: string[], attachedDeposit: number): Promise<unknown> => {
+export const addLiquidity = async (account: Account, poolId: number, amounts: string[], attachedDeposit: number): Promise<FinalExecutionOutcome> => {
   const callOptions: FunctionCallOptions = {
     contractId: DEV_CONTRACT_ID,
     methodName: "add_liquidity",
@@ -115,4 +115,3 @@ export const addLiquidity = async (account: Account, poolId: number, amounts: st
   }
   return await account.functionCall(callOptions);
 }
-

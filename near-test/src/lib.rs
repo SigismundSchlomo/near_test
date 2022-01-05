@@ -107,6 +107,9 @@ impl Contract {
         )
     }
 
+    //Add liquidity is self balancing, but we should expect that amounts will be same as returned from swap
+    //amount in will be divided in half. One half will be exchanged nad other half will be added to the pool with exchanged tokens
+    //TODO: Should be refactored!!! Use external swapAction?
     #[payable]
     pub fn create_position(
         &mut self,
