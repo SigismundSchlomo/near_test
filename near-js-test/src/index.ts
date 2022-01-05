@@ -10,8 +10,6 @@ const ONE_NEAR_IN_YOCTO = Math.pow(10, 24);
 
 const TEST_POOL_ID = 0;
 
-//TODO: Create position function
-
 
 (async function () {
   const config = getConnectionConfig();

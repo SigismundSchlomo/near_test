@@ -1,4 +1,4 @@
-import {Account, Contract} from "near-api-js";
+import {Account, Contract, Near} from "near-api-js";
 import {getConfig} from "./config";
 import {FunctionCall} from "near-api-js/lib/transaction";
 import {FunctionCallOptions} from "near-api-js/lib/account";
