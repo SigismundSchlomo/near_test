@@ -15,6 +15,12 @@ pub trait Callbacks {
         deposit: Balance,
         gas: u128,
     );
+    fn exchange_callback_post_withdraw(
+        &mut self,
+        token_id: AccountId,
+        sender_id: AccountId,
+        amount: U128,
+    );
 }
 
 #[near_bindgen]
@@ -27,10 +33,10 @@ impl Contract {
                 if let Ok(amount) = near_sdk::serde_json::from_slice::<U128>(&val) {
                     amount
                 } else {
-                    env::panic(b"ERR_WRONG_VAL_RECEIVED")
+                    env::panic_str("ERR_WRONG_VAL_RECEIVED")
                 }
             }
-            PromiseResult::Failed => env::panic(b"ERR_CALL_FAILED"),
+            PromiseResult::Failed => env::panic_str("ERR_CALL_FAILED"),
         }
     }
 
@@ -39,9 +45,9 @@ impl Contract {
         &mut self,
         pool_id: u64,
         amount_in_pool: U128,
-        ref_finance_address: &String,
+        ref_finance_address: String,
         deposit: Balance,
-        gas: u64,
+        gas: Gas,
     ) {
         match env::promise_result(0) {
             PromiseResult::NotReady => unreachable!(),
@@ -50,15 +56,15 @@ impl Contract {
                     ext_ref_finance::add_liquidity(
                         pool_id,
                         vec![amount_in_pool, exchanged],
-                        &ref_finance_address,
+                        validate_account_id(ref_finance_address),
                         deposit,
                         gas,
                     );
                 } else {
-                    env::panic(b"ERR_WRONG_VAL_RECEIVED")
+                    env::panic_str("ERR_WRONG_VAL_RECEIVED")
                 }
             }
-            PromiseResult::Failed => env::panic(b"ERR_CALL_FAILED"),
+            PromiseResult::Failed => env::panic_str("ERR_CALL_FAILED"),
         }
     }
 }

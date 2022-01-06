@@ -1,6 +1,6 @@
 use crate::ref_utils::SwapAction;
 use near_contract_standards::storage_management::StorageBalance;
-use near_sdk::json_types::{ValidAccountId, U128};
+use near_sdk::json_types::{U128};
 use near_sdk::{ext_contract, AccountId, PromiseOrValue};
 
 //The seed format is contract_address@pool_id
@@ -20,7 +20,7 @@ pub trait ExtTokens {
 pub trait ExtRefFinance {
     fn storage_deposit(
         &mut self,
-        account_id: Option<ValidAccountId>,
+        account_id: Option<AccountId>,
         registration_only: Option<bool>,
     ) -> StorageBalance;
     fn swap(&mut self, actions: Vec<SwapAction>, referral_id: String) -> U128;

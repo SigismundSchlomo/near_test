@@ -8,11 +8,11 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dev-dependencies]
-near-sdk-sim = "3.2.0"
+near-sdk-sim = "4.0.0-pre.5"
 
 [dependencies]
-near-sdk = "3.1.0"
-near-contract-standards = "3.2.0"
+near-sdk = "4.0.0-pre.5"
+near-contract-standards = "4.0.0-pre.5"
 
 [features]
 main_net = []

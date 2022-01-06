@@ -1,17 +1,10 @@
 use near_sdk::{AccountId, Balance};
-use near_sdk::json_types::ValidAccountId;
 use near_sdk::env;
 
-pub fn validate_account_id(account_id: AccountId) -> ValidAccountId {
-    if let Ok(valid_id) = ValidAccountId::try_from(account_id) {
-        valid_id
+pub fn validate_account_id(string: String) -> AccountId {
+    if let Ok(account_ud) = AccountId::try_from(string) {
+        account_ud
     } else {
-        env::panic(b"ERR_INVALID_ACCOUNT")
+        env::panic_str("ACCOUNT_ID_IS_INVALID")
     }
 }
-
-//floating point problem
-// pub fn convert_near_to_yocto(amount: f64) -> Balance {
-//     let one_near = 10u128.pow(24) as f64;
-//     amount * one_near
-// }

@@ -1,5 +1,5 @@
 use near_contract_standards::fungible_token::receiver::FungibleTokenReceiver;
-use near_sdk::json_types::{U128, ValidAccountId};
+use near_sdk::json_types::{U128};
 use near_sdk::{env, PromiseOrValue, ext_contract, near_bindgen};
 
 use crate::contracts_calls::{ext_token};
@@ -9,7 +9,7 @@ use crate::*;
 impl FungibleTokenReceiver for Contract {
     fn ft_on_transfer(
         &mut self,
-        sender_id: ValidAccountId,
+        sender_id: AccountId,
         amount: U128,
         msg: String,
     ) -> PromiseOrValue<U128> {
@@ -17,13 +17,13 @@ impl FungibleTokenReceiver for Contract {
         // Do some accounting work
         // call token
         let promise = ext_token::ft_transfer_call(
-            "exchange.ref-dev.testnet".to_string(),
+            validate_account_id("ref-finance-101.testnet".to_string()),
             amount,
             None,
             msg,
-            &token_in,
+            token_in,
             1,
-            50_000_000_000_000
+            FIFTY_TGAS
         );
         PromiseOrValue::Value(U128(0))
     }
