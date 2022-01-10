@@ -33,7 +33,8 @@ const ONE_TK_IN_YOCTO: u128 = 10u128.pow(24); // Based on near. Symbolize one TK
 
 //TODO: Add logic to work with whitelisted tokens
 //TODO: ADD file with error constance like in ref finance
-//TODO: Use require instead of assert
+//NOTE: Fungible token to use in project should be implemented in separate contract with minimum
+// changes in standard implementation because conflicts in storage logic occurs
 
 
 //Some crazy constants
@@ -42,14 +43,10 @@ pub const HUNDRED_TGAS: Gas = Gas(100_000_000_000_000);
 pub const FIFTY_TGAS: Gas = Gas(50_000_000_000_000);
 pub const TWENTY_TGAS: Gas = Gas(20_000_000_000_000);
 
-
-near_contract_standards::impl_fungible_token_core!(Contract, token, on_tokens_burned);
-
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
     //FT has 24 decimals
-    token: FungibleToken,
     owner_id: AccountId,
     accounts: LookupMap<AccountId, Account>,
     whitelisted_tokens: UnorderedSet<AccountId>,
@@ -60,14 +57,10 @@ impl Contract {
     #[init]
     pub fn init(owner_id: AccountId, token_total_supply: U128) -> Self {
         let mut this = Self {
-            token: FungibleToken::new(b"t".to_vec()),
             owner_id: owner_id.clone(),
             accounts: LookupMap::new(StorageKey::Accounts),
             whitelisted_tokens: UnorderedSet::new(StorageKey::WhitelistedTokens)
         };
-        this.token.internal_register_account(&owner_id);
-        this.token
-            .internal_deposit(&owner_id, token_total_supply.into());
         this
     }
 
