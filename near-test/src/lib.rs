@@ -1,6 +1,6 @@
 use near_contract_standards::fungible_token::FungibleToken;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::json_types::{ValidAccountId, U128, U64};
+use near_sdk::json_types::{U128, U64};
 use near_sdk::{env, log, near_bindgen, AccountId, Balance, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue, Gas};
 use near_sdk::collections::{LookupMap, UnorderedMap, UnorderedSet};
 use crate::account::Account;
@@ -42,10 +42,8 @@ pub const HUNDRED_TGAS: Gas = Gas(100_000_000_000_000);
 pub const FIFTY_TGAS: Gas = Gas(50_000_000_000_000);
 pub const TWENTY_TGAS: Gas = Gas(20_000_000_000_000);
 
-near_sdk::setup_alloc!();
 
 near_contract_standards::impl_fungible_token_core!(Contract, token, on_tokens_burned);
-near_contract_standards::impl_fungible_token_storage!(Contract, token, on_account_closed);
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -225,8 +223,3 @@ impl Contract {
     }
 }
 
-//
-// #[cfg(all(test, not(target_arch = "wasm32")))]
-// mod tests {
-//
-// }

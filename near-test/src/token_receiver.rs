@@ -22,7 +22,7 @@ impl FungibleTokenReceiver for Contract {
             None,
             msg,
             token_in,
-            1,
+            1, //do something with deposit
             FIFTY_TGAS
         );
         PromiseOrValue::Value(U128(0))

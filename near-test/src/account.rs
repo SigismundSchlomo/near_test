@@ -1,6 +1,6 @@
 use near_sdk::collections::UnorderedMap;
 use near_sdk::borsh::{self,BorshDeserialize, BorshSerialize};
-use near_sdk::json_types::{ValidAccountId, U128};
+use near_sdk::json_types::{U128};
 use near_sdk::{assert_one_yocto, env, Promise, PromiseResult, StorageUsage, require, near_bindgen};
 use near_contract_standards::fungible_token::core_impl::ext_fungible_token;
 
@@ -94,7 +94,7 @@ impl Account {
             let new_balance = balance - amount;
             self.tokens.insert(token, &new_balance);
         } else {
-            env::panic(b"TOKEN_IS_NOT_REGISTERED");
+            env::panic_str("TOKEN_IS_NOT_REGISTERED");
         }
     }
 
@@ -130,7 +130,7 @@ impl Account {
     }
 
     /// Registers given token and set balance to 0.
-    pub fn register(&mut self, token_ids: &Vec<ValidAccountId>) {
+    pub fn register(&mut self, token_ids: &Vec<AccountId>) {
         for token_id in token_ids {
             let t = token_id;
             if self.get_balance(t).is_none() {
@@ -152,7 +152,7 @@ impl Contract {
     /// Registers given token in the user's account deposit.
     /// Fails if not enough balance on this account to cover storage.
     #[payable]
-    pub fn register_tokens(&mut self, token_ids: Vec<ValidAccountId>) {
+    pub fn register_tokens(&mut self, token_ids: Vec<AccountId>) {
         assert_one_yocto();
         let sender_id = env::predecessor_account_id();
         let mut account = self.internal_unwrap_account(&sender_id);
@@ -179,7 +179,7 @@ impl Contract {
     #[payable]
     pub fn withdraw(
         &mut self,
-        token_id: ValidAccountId,
+        token_id: AccountId,
         amount: U128,
         unregister: Option<bool>,
     ) -> Promise {
