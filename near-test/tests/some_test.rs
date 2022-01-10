@@ -1,34 +1,20 @@
-use near_sdk::serde_json::json;
-use near_sdk_sim::{DEFAULT_GAS, view, call};
-
-use crate::common::utils::init;
+use crate::common::utils::{init, register_account};
+use near_sdk_sim::{call, to_yocto, view};
 
 pub mod common;
 
 #[test]
-fn simulate_some_view() {
+fn call_stake() {
     let (root, contract) = init();
 
-    let actual: String = view!(
-        contract.get_message()
-    ).unwrap_json();
+    register_account(&root, &contract);
 
-    assert_eq!("".to_string(), actual);
-}
+    let result = call!(root, contract.stake(), deposit = to_yocto("1"));
 
-#[test]
-fn simulate_some_change() {
-    let (root, contract) = init();
-    let result = call!(
-        root,
-        contract.set_message("Hello".to_string()),
-        deposit = 1
-    );
-
+    println!("Gas burned: {:?}", result.gas_burnt());
     assert!(result.is_ok());
-    let after: String = view!(
-        contract.get_message()
-    ).unwrap_json();
 
-    assert_eq!("Hello".to_string(), after);
+    let result: String = view!(contract.ft_total_supply()).unwrap_json();
+
+    println!("Total stake: {:?}", result);
 }
